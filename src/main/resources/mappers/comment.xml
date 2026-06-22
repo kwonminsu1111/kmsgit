@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.enjoytrip.mapper.CommentMapper">
+
+    <insert id="insertComment">
+        INSERT INTO Comments (board_id, user_id, content, created_at)
+        VALUES (#{boardId}, #{userId}, #{content}, NOW())
+    </insert>
+
+    <select id="selectCommentsByBoardId" resultType="com.ssafy.enjoytrip.dto.response.CommentResponse">
+        SELECT 
+            c.id,
+            c.board_id AS boardId,
+            c.user_id AS userId,
+            u.nickname,
+            c.content,
+            c.created_at AS createdAt
+        FROM Comments c
+        JOIN Users u ON c.user_id = u.id
+        WHERE c.board_id = #{boardId}
+        ORDER BY c.id ASC 
+    </select>
+
+    <select id="selectCommentById" resultType="com.ssafy.enjoytrip.dto.response.CommentResponse">
+        SELECT 
+            id,
+            board_id AS boardId,
+            user_id AS userId,
+            content,
+            created_at AS createdAt
+        FROM Comments
+        WHERE id = #{id}
+    </select>
+
+    <delete id="deleteComment">
+        DELETE FROM Comments 
+        WHERE id = #{id}
+    </delete>
+
+</mapper>

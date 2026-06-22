@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.enjoytrip.mapper.UserMapper">
+
+    <insert id="insertUser" parameterType="com.ssafy.enjoytrip.model.User">
+        INSERT INTO Users (
+            id, 
+            nickname, 
+            email, 
+            password, 
+            profile_path, 
+            reg_date, 
+            role
+        ) VALUES (
+            #{id}, 
+            #{nickname}, 
+            #{email}, 
+            #{password}, 
+            #{profilePath}, 
+            #{regDate}, 
+            #{role}
+        )
+    </insert>
+
+    <select id="selectUserById" parameterType="string" resultType="com.ssafy.enjoytrip.model.User">
+        SELECT 
+            id, 
+            nickname, 
+            email, 
+            password, 
+            profile_path AS profilePath, reg_date AS regDate,
+            role
+        FROM Users
+        WHERE id = #{id}
+    </select>
+    
+    <select id="selectUserByEmail" parameterType="string" resultType="com.ssafy.enjoytrip.model.User">
+        SELECT 
+            id, 
+            nickname, 
+            email, 
+            password, 
+            profile_path AS profilePath, reg_date AS regDate,
+            role
+        FROM Users
+        WHERE email = #{email}
+    </select>
+
+    <select id="selectAllUsers" resultType="com.ssafy.enjoytrip.model.User">
+        SELECT 
+            id, 
+            nickname, 
+            email, 
+            password, 
+            profile_path AS profilePath,
+            reg_date AS regDate,
+            role
+        FROM Users
+    </select>
+
+    <update id="updateUser" parameterType="com.ssafy.enjoytrip.model.User">
+        UPDATE Users
+        SET 
+            nickname = #{nickname},
+            email = #{email},
+            profile_path = #{profilePath},
+            password = #{password}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteUser" parameterType="string">
+        DELETE FROM Users
+        WHERE id = #{id}
+    </delete>
+    
+    <!-- 유저의 댓글을 불러오는 sql문 -->
+    <select id="selectUserComments" parameterType="string" resultType="com.ssafy.enjoytrip.dto.response.UserCommentResponse">
+        SELECT 
+            c.id AS commentId,
+            c.board_id AS boardId,
+            b.title AS title,
+            c.content AS content,
+            c.created_at AS createdAt
+        FROM Comments c
+        JOIN Boards b ON c.board_id = b.id
+        WHERE c.user_id = #{userId}
+        ORDER BY c.created_at DESC
+    </select>
+
+	<!-- 유저가 좋아요 누른 게시글을 불러오는 sql문 -->
+    <select id="selectUserLikedBoards" parameterType="string" resultType="com.ssafy.enjoytrip.dto.response.UserLikedBoardResponse">
+        SELECT 
+            b.id AS boardId,
+            b.title AS title,
+            b.content AS content,
+            b.created_at AS createdAt
+        FROM Board_Like bl
+        JOIN Boards b ON bl.board_id = b.id
+        WHERE bl.user_id = #{userId}
+        ORDER BY b.created_at DESC
+    </select>
+    
+    <!-- 유저 해시태그 삭제&추가 -->
+    <delete id="deleteUserHashtags" parameterType="string">
+	    DELETE FROM User_Hashtag 
+	    WHERE user_id = #{userId}
+	</delete>
+
+	<insert id="insertUserHashtag">
+	    INSERT INTO User_Hashtag (user_id, hashtag_id)
+	    VALUES (#{userId}, #{hashtagId})
+	</insert>
+
+</mapper>

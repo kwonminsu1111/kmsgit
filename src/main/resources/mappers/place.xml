@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.enjoytrip.mapper.PlaceMapper">
+
+	<select id="selectPlaceDetailBase" resultType="com.ssafy.enjoytrip.dto.response.PlaceDetailResponse">
+        SELECT 
+            #{placeId} AS placeId,
+            IFNULL(ROUND(AVG(rate), 1), 0.0) AS rateAvg
+        FROM Reviews 
+        WHERE place_id = #{placeId}
+    </select>
+    
+    <select id="selectReviewsByPlaceId" resultType="com.ssafy.enjoytrip.dto.response.MainReviewResponse">
+        SELECT 
+            r.id AS reviewId,
+            r.user_id AS userId,
+            u.nickname AS userNickname,
+            r.rate,
+            r.content,
+            DATE_FORMAT(r.created_at, '%Y-%m-%d') AS createdAt
+        FROM Reviews r
+        JOIN Users u ON r.user_id = u.id
+        WHERE r.place_id = #{placeId}
+        ORDER BY r.created_at DESC
+    </select>
+
+    <select id="checkAttractionExist" resultType="int">
+        SELECT COUNT(*) FROM Attractions WHERE id = #{placeId}
+    </select>
+
+    <insert id="insertBlankAttraction">
+        INSERT INTO Attractions (id)
+        VALUES (#{placeId})
+    </insert>
+
+    <insert id="insertReview">
+        INSERT INTO Reviews (place_id, user_id, rate, content, created_at)
+        VALUES (#{placeId}, #{userId}, #{dto.rate}, #{dto.content}, NOW())
+    </insert>
+
+    <select id="selectReviewWriterId" resultType="string">
+        SELECT user_id FROM Reviews WHERE id = #{reviewId}
+    </select>
+
+    <delete id="deleteReview">
+        DELETE FROM Reviews WHERE id = #{reviewId}
+    </delete>
+</mapper>

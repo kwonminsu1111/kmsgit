@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.enjoytrip.mapper.PlanMapper">
+
+	<!-- DB에 이미 존재하는지 확인 -->
+	<select id="checkAttractionExist" resultType="int">
+        SELECT COUNT(*) FROM Attractions WHERE id = #{placeId}
+    </select>
+
+	<!-- 빈 여행지 저장 -->
+    <insert id="insertBlankAttraction">
+        INSERT INTO Attractions (id)
+        VALUES (#{placeId})
+    </insert>
+
+	<!-- 여행 계획 카드 리스트(status : 진행중 or 완료) -->
+    <select id="selectPlansByUserIdAndStatus" resultType="com.ssafy.enjoytrip.dto.response.PlanResponse">
+        SELECT 
+            id,
+            user_id AS userId,
+            title,
+            start_date AS startDate,
+            end_date AS endDate,
+            status,
+            created_at AS createdAt
+        FROM Plans
+        WHERE user_id = #{userId}
+          AND status = #{status}
+        ORDER BY id DESC
+    </select>
+    
+    <!-- 새 일정카드 만들기 -->
+    <insert id="insertPlanMaster" parameterType="com.ssafy.enjoytrip.model.Plan"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO Plans (user_id, title, start_date, end_date, status, created_at)
+        VALUES (#{userId}, #{title}, #{startDate}, #{endDate}, 'ONGOING', NOW())
+    </insert>
+    
+    <!-- 카드 제목 변경 -->
+    <update id="updatePlanTitle">
+        UPDATE Plans
+        SET title = #{title}
+        WHERE id = #{planId}
+    </update>
+
+	<!-- 카드 삭제 -->
+    <delete id="deletePlanMaster">
+        DELETE FROM Plans WHERE id = #{planId}
+    </delete>
+    
+    <!-- 자동완성용 계획 불러오기 -->
+    <select id="selectPlanMasterById" resultType="com.ssafy.enjoytrip.model.Plan">
+	    SELECT 
+	        id, 
+	        user_id AS userId, 
+	        title, 
+	        start_date AS startDate, 
+	        end_date AS endDate, 
+	        status, 
+	        created_at AS createdAt
+	    FROM Plans
+	    WHERE id = #{planId}
+	</select>
+
+
+
+    <!-- 여행 계획 상세 수정 -->
+    
+    <!-- 블럭 로딩(조회) -->
+    <select id="selectPlanDetailsByPlanId" resultType="com.ssafy.enjoytrip.dto.response.PlanDetailResponse">
+        SELECT 
+            id AS detailId,
+            plan_id AS planId,
+            place_id AS placeId,
+            sequence,
+            day
+        FROM Plans_Details
+        WHERE plan_id = #{planId}
+        ORDER BY day ASC, sequence ASC
+    </select>
+    
+    <!-- 플랜 일정 시작일/종료일 수정 -->
+    <update id="updatePlanMaster">
+        UPDATE Plans
+        SET start_date = #{dto.startDate},
+            end_date = #{dto.endDate}
+        WHERE id = #{planId}
+    </update>
+    
+    <!-- 계획 진행중/완료됨 상태 판별 -->
+    <select id="selectPlanStatusById" resultType="string">
+	    SELECT status 
+	    FROM Plans 
+	    WHERE id = #{planId}
+	</select>
+    
+    <!-- 계획 status 직접적으로 변경 -->
+    <update id="updatePlanStatusDirectly">
+        UPDATE Plans
+        SET status = #{status}
+        WHERE id = #{planId}
+    </update>
+
+	<!-- 여행 종료일 자정 지나면 ONGOING -> COMPLETED status 변경 -->
+    <update id="updatePlanStatusAutomatically">
+        UPDATE Plans
+        SET status = 'COMPLETED'
+        WHERE status = 'ONGOING'
+          AND end_date &lt; CURRENT_DATE()
+    </update>
+
+	<!-- 저장 시, 기존의 데이터는 clear -->
+    <delete id="deletePlanDetailsByPlanId">
+        DELETE FROM Plans_Details WHERE plan_id = #{planId}
+    </delete>
+
+	<!-- 저장 시, 새로 수정한 데이터를 끼워넣음 -->
+    <insert id="insertPlanDetail">
+        INSERT INTO Plans_Details (plan_id, place_id, day, sequence)
+        VALUES (#{planId}, #{detail.placeId}, #{detail.day}, #{detail.sequence})
+    </insert>
+</mapper>
