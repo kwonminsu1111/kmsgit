@@ -14,7 +14,7 @@ import com.ssafy.enjoytrip.model.Plan;
 @Mapper
 public interface PlanMapper {
     // 1. 내 여행 계획 목록 조회 (ongoing / completed 필터링)
-    List<PlanResponse> selectPlansByUserIdAndStatus(@Param("userId") String userId, @Param("status") String status);
+    List<PlanResponse> selectPlansByUserIdAndStatus(@Param("userId") Long userId, @Param("status") String status);
     
     // 2. 새 계획 마스터 껍데기 생성 (useGeneratedKeys 마법)
     int insertPlanMaster(Plan plan);

@@ -24,10 +24,10 @@ public interface PlaceMapper {
     int insertBlankAttraction(Long placeId);
     
     // 5. 실제 리뷰 등록
-    int insertReview(@Param("placeId") Long placeId, @Param("userId") String userId, @Param("dto") ReviewCreateRequest dto);
+    int insertReview(@Param("placeId") Long placeId, @Param("userId") Long userId, @Param("dto") ReviewCreateRequest dto);
     
     // 6. 삭제 요청 시 권한 방어용: 리뷰 작성자 ID 조회
-    String selectReviewWriterId(Long reviewId);
+    Long selectReviewWriterId(Long reviewId);
     
     // 7. 리뷰 삭제
     int deleteReview(Long reviewId);

@@ -31,14 +31,14 @@ import lombok.RequiredArgsConstructor;
 
 @Tag(name = "Plan 컨트롤러", description = "여행 플래너 카드 CRUD 및 일차별 상세 동선 제어 컨트롤러")
 @RestController
-@RequestMapping("/api/plans")
+@RequestMapping("/plans")
 @RequiredArgsConstructor
 public class PlanController {
 
     private final PlanService planService;
     
-    private String getLoginUserId(HttpServletRequest request) {
-        return (String) request.getAttribute("loginUserId");
+    private Long getLoginUserId(HttpServletRequest request) {
+        return (Long) request.getAttribute("loginUserId");
     }
 
     @Operation(summary = "내 여행 일정 목록 조회", description = "status 파라미터(ongoing/completed)에 따라 내 일정 카드를 가져옵니다.")
@@ -47,7 +47,7 @@ public class PlanController {
             @RequestParam(required = false, defaultValue = "ongoing") String status,
             HttpServletRequest request
     ) {
-    	String userId = getLoginUserId(request);
+    	Long userId = (Long) getLoginUserId(request);
         List<PlanResponse> plans = planService.getPlans(userId, status);
         return ResponseEntity.ok(ApiResponse.success("여행 계획 목록 조회 성공", plans));
     }
@@ -59,7 +59,7 @@ public class PlanController {
             @RequestBody PlanDetailRequest dto,
             HttpServletRequest request
     ) {
-        String userId = getLoginUserId(request);
+    	Long userId = getLoginUserId(request);
         
         boolean isSuccess = planService.addPlaceToPlan(planId, userId, dto);
 
@@ -78,7 +78,7 @@ public class PlanController {
             @RequestBody PlanCreateRequest dto,
             HttpServletRequest request
     ) {
-        String userId = getLoginUserId(request);
+    	Long userId = getLoginUserId(request);
         Long planId = planService.createPlanTemplate(userId, dto);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("여행 계획 생성 성공", planId));
@@ -91,7 +91,7 @@ public class PlanController {
             @RequestParam String title,
             HttpServletRequest request
     ) {
-        String userId = getLoginUserId(request);
+    	Long userId = getLoginUserId(request);
         boolean isUpdated = planService.modifyPlanTitle(planId, userId, title);
 
         if (isUpdated) {
@@ -106,7 +106,7 @@ public class PlanController {
             @PathVariable Long planId,
             HttpServletRequest request
     ) {
-        String userId = getLoginUserId(request);
+    	Long userId = getLoginUserId(request);
         boolean isDeleted = planService.removePlan(planId, userId);
 
         if (isDeleted) {
@@ -122,7 +122,7 @@ public class PlanController {
             @RequestBody PlanSaveRequest dto,
             HttpServletRequest request
     ) {
-        String userId = getLoginUserId(request);
+    	Long userId = getLoginUserId(request);
         planService.saveFullPlanRoute(planId, userId, dto);
         return ResponseEntity.ok(ApiResponse.success("여행 계획 저장 완료", null));
     }

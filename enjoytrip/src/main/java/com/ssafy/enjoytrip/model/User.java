@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class User {
-    private String id;          // 사용자 아이디
+    private Long id;            // 사용자 아이디
     private String nickname;    // 닉네임
     private String email;       // 이메일
     private String password;    // 비밀번호 (해싱되어 저장될 예정)

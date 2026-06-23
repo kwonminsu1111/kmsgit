@@ -24,14 +24,14 @@ import lombok.RequiredArgsConstructor;
 
 @Tag(name = "Comment 컨트롤러", description = "게시글 하위 댓글의 생성, 조회, 삭제 API")
 @RestController
-@RequestMapping("/api/boards/{boardId}/comments")
+@RequestMapping("/boards/{boardId}/comments")
 @RequiredArgsConstructor
 public class CommentController {
 	
 	private final CommentService commentService;
 	
-	private String getLoginUserId(HttpServletRequest request) {
-	    return (String) request.getAttribute("loginUserId");
+	private Long getLoginUserId(HttpServletRequest request) {
+	    return (Long) request.getAttribute("loginUserId");
 	}
 	
 	@Operation(summary = "댓글 작성", description = "게시글 고유 번호와 댓글을 받아 새 댓글을 등록")
@@ -41,7 +41,7 @@ public class CommentController {
             @RequestBody CommentRequest dto,
             HttpServletRequest request
     ) {
-		String userId = getLoginUserId(request);
+		Long userId = getLoginUserId(request);
 	    boolean isSuccess = commentService.createComment(boardId, userId, dto.getContent());
 
 	    if (isSuccess) {
@@ -66,7 +66,7 @@ public class CommentController {
             @PathVariable Long commentId,
             HttpServletRequest request
     ) {
-		String userId = getLoginUserId(request);
+		Long userId = getLoginUserId(request);
 	    boolean isDeleted = commentService.deleteComment(commentId, userId);
 
 	    if (isDeleted) {

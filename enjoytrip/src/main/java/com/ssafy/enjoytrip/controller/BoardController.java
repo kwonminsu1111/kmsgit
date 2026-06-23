@@ -10,13 +10,13 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ssafy.enjoytrip.dto.request.BoardCreateRequest;
 import com.ssafy.enjoytrip.dto.response.BoardResponse;
+import com.ssafy.enjoytrip.model.Hashtag;
 import com.ssafy.enjoytrip.service.BoardService;
 import com.ssafy.enjoytrip.util.ApiResponse;
 
@@ -27,40 +27,41 @@ import lombok.RequiredArgsConstructor;
 
 @Tag(name = "Board 컨트롤러", description = "자유게시판 목록 조회 및 상세 보기 API")
 @RestController
-@RequestMapping("/api/boards")
+@RequestMapping("/boards")
 @RequiredArgsConstructor // BoardService를 자동으로 주입해 줍니다.
 public class BoardController {
 
     private final BoardService boardService;
 
-    private String getLoginUserId(HttpServletRequest request) {
-        return (String) request.getAttribute("loginUserId");
+    private Long getLoginUserId(HttpServletRequest request) {
+        return (Long) request.getAttribute("loginUserId");
     }
     
-    @Operation(summary = "전체 게시글 목록 조회", description = "데이터베이스에 등록된 모든 게시글을 최신순, 좋아요순, 방문순으로 정렬합니다.")
+    @Operation(summary = "전체 게시글 목록 조회", description = "게시글을 최신순, 좋아요순, 방문순으로 정렬 & 나의 해시태그로 필터링 합니다.")
     @GetMapping
     public ResponseEntity<ApiResponse<List<BoardResponse>>> getAllBoards(
     		@RequestParam(required = false) String region,
     		@RequestParam(required = false, defaultValue = "latest") String orderBy,
     		@RequestParam(required = false, defaultValue = "false") boolean myPosts,
     		@RequestParam(required = false) List<String> tags,
+    		@RequestParam(required = false, defaultValue = "false") boolean myTags,
     		HttpServletRequest request
     ) {
-    	String userId = getLoginUserId(request);
+    	Long userId = (Long) request.getAttribute("loginUserId");
     	
-        List<BoardResponse> response = boardService.getAllBoards(region, orderBy, myPosts, userId, tags);
+        List<BoardResponse> response = boardService.getAllBoards(region, orderBy, myPosts, userId, tags, myTags);
         return ResponseEntity.ok(ApiResponse.success("전체 게시글 목록 조회 성공", response));
     }
     
-    @Operation(summary = "현재 로그인한 유저의 해시태그 조회", description = "내 태그 불러오기 버튼 클릭 시 활성화할 유저의 고정 태그 목록을 반환합니다.")
-    @GetMapping("/my-tags")
-    public ResponseEntity<ApiResponse<List<String>>> getMyTags(
-    		HttpServletRequest request
-    ) {
-    	String userId = getLoginUserId(request);
-    	
-        List<String> userTags = boardService.getUserHashtags(userId);
-        return ResponseEntity.ok(ApiResponse.success("유저 해시태그 조회 성공", userTags));
+    // 글 작성/수정 시 해시태그 선택 팝업용 전체 리스트 반환 API
+    @Operation(summary = "DB 상의 모든 해시태그 조회", description = "DB 상의 태그 목록을 반환합니다.")
+    @GetMapping("/all-tags")
+    public ResponseEntity<ApiResponse> getAllHashtags() {
+        List<Hashtag> tags = boardService.getAllHashtags();
+        
+        return ResponseEntity.ok(
+            ApiResponse.success("해시태그 전체 목록 조회 성공", tags)
+        );
     }
 
     @Operation(summary = "게시글 상세 조회", description = "게시글 고유 번호(ID)와 특정 유저의 좋아요 여부도 확인 가능")
@@ -69,7 +70,7 @@ public class BoardController {
             @PathVariable Long boardId,
             HttpServletRequest request
     ) {
-    	String userId = getLoginUserId(request);
+    	Long userId = getLoginUserId(request);
         BoardResponse response = boardService.getBoardById(boardId, userId);
         
         if (response != null) {
@@ -84,7 +85,7 @@ public class BoardController {
             @PathVariable Long boardId,
             HttpServletRequest request
     ) {
-    	String userId = getLoginUserId(request);
+    	Long userId = getLoginUserId(request);
         boolean isLiked = boardService.toggleLike(boardId, userId);
         return ResponseEntity.ok(ApiResponse.success(isLiked ? "좋아요 등록 성공" : "좋아요 취소 성공", isLiked));
     }
@@ -96,7 +97,7 @@ public class BoardController {
     		@RequestBody BoardCreateRequest dto,
     		HttpServletRequest request) {
     	
-    	String userId = getLoginUserId(request);
+    	Long userId = getLoginUserId(request);
         boolean isSuccess = boardService.createBoard(dto, userId);
 
         if (isSuccess) {
@@ -115,7 +116,7 @@ public class BoardController {
             @PathVariable Long boardId,
             HttpServletRequest request
     ) {
-    	String userId = getLoginUserId(request);
+    	Long userId = getLoginUserId(request);
         boolean isDeleted = boardService.deleteBoard(boardId, userId);
 
         if (isDeleted) {
@@ -132,7 +133,7 @@ public class BoardController {
             @RequestBody BoardCreateRequest dto,
             HttpServletRequest request
     ) {
-    	String userId = getLoginUserId(request);
+    	Long userId = getLoginUserId(request);
         boolean isUpdated = boardService.updateBoard(boardId, dto, userId);
 
         if (isUpdated) {

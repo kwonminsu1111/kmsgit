@@ -11,7 +11,7 @@ import com.ssafy.enjoytrip.dto.response.CommentResponse;
 public interface CommentMapper {
 	// 1. 댓글 등록
     int insertComment(@Param("boardId") Long boardId, 
-                      @Param("userId") String userId, 
+                      @Param("userId") Long userId, 
                       @Param("content") String content);
 
     // 2. 특정 게시글에 달린 댓글 목록 전체 조회

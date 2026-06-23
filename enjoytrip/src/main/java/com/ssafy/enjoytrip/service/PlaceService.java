@@ -18,7 +18,7 @@ public class PlaceService {
 
     private final PlaceMapper placeMapper;
 
-    public PlaceDetailResponse getPlaceDetail(Long placeId, String currentUserId) {
+    public PlaceDetailResponse getPlaceDetail(Long placeId, Long currentUserId) {
         // 1. 리뷰 테이블을 집계하여 장소 고유 식별자 및 평균 평점 스캔
         PlaceDetailResponse detail = placeMapper.selectPlaceDetailBase(placeId);
         
@@ -38,7 +38,7 @@ public class PlaceService {
     
     // 리뷰 작성
     @Transactional
-    public boolean createReview(Long placeId, String userId, ReviewCreateRequest dto) {
+    public boolean createReview(Long placeId, Long userId, ReviewCreateRequest dto) {
         
         // 별점이 1점~5점 범위를 벗어나면 DB까지 가지도 못하게 컷
         if (dto.getRate() < 1 || dto.getRate() > 5) {
@@ -59,9 +59,9 @@ public class PlaceService {
 
     // 리뷰 삭제
     @Transactional
-    public boolean deleteReview(Long reviewId, String currentUserId) {
+    public boolean deleteReview(Long reviewId, Long currentUserId) {
     	// 1. DB에서 해당 리뷰를 누가 작성했는지 검사
-    	String writerId = placeMapper.selectReviewWriterId(reviewId);
+    	Long writerId = placeMapper.selectReviewWriterId(reviewId);
 
         if (writerId == null) {
             throw new IllegalArgumentException("존재하지 않는 리뷰입니다.");

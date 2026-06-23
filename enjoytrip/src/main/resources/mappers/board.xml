@@ -38,6 +38,14 @@
 		            </foreach>
 		        )
         	</if>
+        	<if test="myTags">
+			    AND b.id IN (
+			        SELECT bh.board_id
+			        FROM board_hashtag bh
+			        JOIN User_Hashtag uh ON bh.hashtag_id = uh.hashtag_id
+			        WHERE uh.user_id = #{loginUserId}
+			    )
+			</if>
         </where>
         
         <!-- 좋아요순 , 조회수순, 최신순 -->
@@ -52,15 +60,7 @@
 	            ORDER BY b.id DESC
 	        </otherwise>
 	    </choose>
-    </select>
-    
-    <!-- 유저의 해시태그 조회 -->
-    <select id="selectUserHashtags" parameterType="string" resultType="string">
-		SELECT h.tag_name
-		FROM User_Hashtag uh
-		JOIN Hashtag h ON uh.hashtag_id = h.id
-		WHERE uh.user_id = #{userId}
-	</select>                
+    </select>            
         
     <!-- 조회수 쿼리 -->
     
@@ -137,6 +137,15 @@
 	    JOIN Hashtag h ON bh.hashtag_id = h.id
 	    WHERE bh.board_id = #{boardId}
 	</select>
+	
+	<!-- 해시태그 불러오기 -->
+    <select id="selectAllHashtags" resultType="com.ssafy.enjoytrip.model.Hashtag">
+        SELECT 
+            id, 
+            tag_name AS tagName
+        FROM Hashtag
+        ORDER BY tag_name ASC
+    </select>
     
     <!-- 게시글 삭제 -->
     <delete id="deleteBoard" parameterType="long">

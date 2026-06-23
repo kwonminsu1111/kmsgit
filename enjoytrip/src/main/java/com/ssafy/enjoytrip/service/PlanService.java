@@ -25,7 +25,7 @@ public class PlanService {
     private final PlanMapper planMapper;
 
     @Transactional
-    public boolean addPlaceToPlan(Long planId, String userId, PlanDetailRequest request) {
+    public boolean addPlaceToPlan(Long planId, Long userId, PlanDetailRequest request) {
     	validatePlanOwner(planId, userId);
     	
         // 1. 카카오 place_id가 우리 DB(Attractions)에 있는지 은밀하게 검사합니다.
@@ -42,14 +42,14 @@ public class PlanService {
     }
     
     // 1. 내 일정 목록 로드
-    public List<PlanResponse> getPlans(String userId, String status) {
+    public List<PlanResponse> getPlans(Long userId, String status) {
         String queryStatus = "completed".equalsIgnoreCase(status) ? "COMPLETED" : "ONGOING";
         return planMapper.selectPlansByUserIdAndStatus(userId, queryStatus);
     }
 
     // 2. 일정카드 추가 버튼 클릭 시 
     @Transactional
-    public Long createPlanTemplate(String userId, PlanCreateRequest dto) {
+    public Long createPlanTemplate(Long userId, PlanCreateRequest dto) {
         LocalDate startDate = LocalDate.parse(dto.getStartDate());
         LocalDate endDate = LocalDate.parse(dto.getEndDate());
         LocalDate today = LocalDate.now();
@@ -76,14 +76,14 @@ public class PlanService {
 
     // 3. ... 메뉴 -> 제목 수정
     @Transactional
-    public boolean modifyPlanTitle(Long planId, String userId, String newTitle) {
+    public boolean modifyPlanTitle(Long planId, Long userId, String newTitle) {
     	validatePlanOwner(planId, userId);
         return planMapper.updatePlanTitle(planId, newTitle) > 0;
     }
 
     // 4. ... 메뉴 -> 카드 완전 삭제
     @Transactional
-    public boolean removePlan(Long planId, String userId) {
+    public boolean removePlan(Long planId, Long userId) {
     	validatePlanOwner(planId, userId);
     	
         // 자식 테이블(Plans_Details)의 종속 장소 블록들 선행 파괴
@@ -99,7 +99,7 @@ public class PlanService {
 
     // 6. 플래너 내부에서 수정할 때도 필터링
     @Transactional
-    public boolean saveFullPlanRoute(Long planId, String userId, PlanSaveRequest dto) {
+    public boolean saveFullPlanRoute(Long planId, Long userId, PlanSaveRequest dto) {
     	validatePlanOwner(planId, userId);
     	
     	String currentStatus = planMapper.selectPlanStatusById(planId);
@@ -168,7 +168,7 @@ public class PlanService {
         return response;
     }
     
-    private void validatePlanOwner(Long planId, String userId) {
+    private void validatePlanOwner(Long planId, Long userId) {
         Plan plan = planMapper.selectPlanMasterById(planId);
         
         if (plan == null) {
