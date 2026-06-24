@@ -15,7 +15,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Board {
 	private Long id;
-	private String userId;
+	private Long userId;
 	private Long planId;
 	private String title;
 	private String content;

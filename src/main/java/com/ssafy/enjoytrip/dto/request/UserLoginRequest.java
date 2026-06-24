@@ -8,7 +8,7 @@ import lombok.Setter;
 @Schema(description = "로그인 요청 정보")
 public class UserLoginRequest {
 
-    @Schema(description = "사용자 이메일", example = "ssafy@ssafy.com")
+    @Schema(description = "사용자 이메일", example = "abc@ssafy.com")
     private String email;
 
     @Schema(description = "비밀번호", example = "1234")

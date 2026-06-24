@@ -9,6 +9,7 @@ import com.ssafy.enjoytrip.dto.request.BoardCreateRequest;
 import com.ssafy.enjoytrip.dto.response.BoardResponse;
 import com.ssafy.enjoytrip.mapper.BoardMapper;
 import com.ssafy.enjoytrip.model.Board;
+import com.ssafy.enjoytrip.model.Hashtag;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,19 +21,14 @@ public class BoardService {
 
     // 전체 조회 비즈니스 로직
     public List<BoardResponse> getAllBoards(String region, String orderBy, 
-    		boolean myPostsOnly, String loginUserId, List<String> tags) {
-        String filterUserId = myPostsOnly ? loginUserId : null;
+    		boolean myPostsOnly, Long userId, List<String> tags, boolean myTags) {
+        Long filterUserId = myPostsOnly ? userId : null;
     	
-    	return boardMapper.selectAllBoards(region, orderBy, filterUserId, tags);
-    }
-    
-    // 유저의 해시태그 리스트 조회 로직
-    public List<String> getUserHashtags(String userId) {
-        return boardMapper.selectUserHashtags(userId);
+    	return boardMapper.selectAllBoards(region, orderBy, filterUserId, tags, myTags, userId);
     }
 
     // 상세 조회 비즈니스 로직
-    public BoardResponse getBoardById(Long boardId, String userId) {
+    public BoardResponse getBoardById(Long boardId, Long userId) {
     	// 조회수 + 1
     	boardMapper.updateHit(boardId);
     	
@@ -52,7 +48,7 @@ public class BoardService {
     
     // 좋아요 토글 로직
     @Transactional
-    public boolean toggleLike(Long boardId, String userId) {
+    public boolean toggleLike(Long boardId, Long userId) {
         // 1. 이미 좋아요를 누른 상태인지 DB 체크
         int likeCount = boardMapper.checkLikeExists(boardId, userId);
         
@@ -74,7 +70,7 @@ public class BoardService {
     // ==========================================================
     @Transactional
     public boolean createBoard(BoardCreateRequest dto,
-            String loginUserId) {
+            Long loginUserId) {
         // 프론트에서 받은 DTO를 Entity로 변환
         Board board = new Board();
         board.setUserId(loginUserId);
@@ -114,7 +110,7 @@ public class BoardService {
 
     // 게시글 삭제 (Delete)
     @Transactional
-    public boolean deleteBoard(Long id, String userId) {
+    public boolean deleteBoard(Long id, Long userId) {
         Board board = boardMapper.selectBoardById(id);
         if (board == null) return false;
 
@@ -128,7 +124,7 @@ public class BoardService {
     
     // 게시글 수정 (Update)
     @Transactional
-    public boolean updateBoard(Long boardId, BoardCreateRequest dto, String userId) {
+    public boolean updateBoard(Long boardId, BoardCreateRequest dto, Long userId) {
     	// 1. DB에서 수정할 게시글 원본 가져오기
         Board board = boardMapper.selectBoardById(boardId);
         if (board == null) {
@@ -167,5 +163,10 @@ public class BoardService {
         }
 
         return false;
+    }
+    
+    // 수정 시, 해시태그 불러오기
+    public List<Hashtag> getAllHashtags() {
+        return boardMapper.selectAllHashtags();
     }
 }

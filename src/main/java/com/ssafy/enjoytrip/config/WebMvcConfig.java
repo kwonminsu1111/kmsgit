@@ -19,14 +19,19 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(jwtInterceptor)
                 .addPathPatterns(
-                        "/api/plans/**",
-                        "/api/boards/**",
-                        "/api/users/**",
-                        "/main/searchplace/**"
+                        "/plans/**",
+                        "/boards/**",
+                        "/users/**",
+                        "/main/**",
+                        "/users/me",
+                        "/users/logout",
+                        "/users/delete"
                         )
                 .excludePathPatterns(
-                        "/api/users/login",
-                        "/api/users/register",
+                        "/users/login",
+                        "/users/logout",
+                        "/users/re-issue",
+                        "/users/register",
                         "/swagger-ui/**",
                         "/v3/api-docs/**");
     }
@@ -37,7 +42,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .allowedOrigins("http://localhost:3000")
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .exposedHeaders("Set-Cookie")
+                .exposedHeaders("Authorization", "Refresh-Token", "Set-Cookie")
                 .allowCredentials(true)
                 .maxAge(3600);
     }

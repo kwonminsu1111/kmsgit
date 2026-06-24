@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 public class Review {
 	private Long id;
-	private String userId;
+	private Long userId;
 	private Long placeId;
 	private int rate;
 	private String content;

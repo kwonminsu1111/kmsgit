@@ -8,7 +8,7 @@ import lombok.Setter;
 @Setter
 public class PlanResponse {
     private Long id;
-    private String userId;
+    private Long userId;
     private String title;
     private String startDate;
     private String endDate;

@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 public class Plan {
 	private Long id;            // 여행 계획 고유 번호 (PK)
-	private String userId;
+	private Long userId;
     private String title;       // 여행 계획 제목
     private String startDate;   // 여행 시작일 (YYYY-MM-DD)
     private String endDate;     // 여행 종료일 (YYYY-MM-DD)

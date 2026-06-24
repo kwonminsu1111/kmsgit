@@ -4,9 +4,9 @@
 
 <mapper namespace="com.ssafy.enjoytrip.mapper.UserMapper">
 
-    <insert id="insertUser" parameterType="com.ssafy.enjoytrip.model.User">
+    <insert id="insertUser" parameterType="com.ssafy.enjoytrip.model.User"
+            useGeneratedKeys="true" keyProperty="id">
         INSERT INTO Users (
-            id, 
             nickname, 
             email, 
             password, 
@@ -14,7 +14,6 @@
             reg_date, 
             role
         ) VALUES (
-            #{id}, 
             #{nickname}, 
             #{email}, 
             #{password}, 
@@ -24,7 +23,7 @@
         )
     </insert>
 
-    <select id="selectUserById" parameterType="string" resultType="com.ssafy.enjoytrip.model.User">
+    <select id="selectUserById" parameterType="long" resultType="com.ssafy.enjoytrip.model.User">
         SELECT 
             id, 
             nickname, 
@@ -70,13 +69,13 @@
         WHERE id = #{id}
     </update>
 
-    <delete id="deleteUser" parameterType="string">
+    <delete id="deleteUser" parameterType="long">
         DELETE FROM Users
         WHERE id = #{id}
     </delete>
     
     <!-- 유저의 댓글을 불러오는 sql문 -->
-    <select id="selectUserComments" parameterType="string" resultType="com.ssafy.enjoytrip.dto.response.UserCommentResponse">
+    <select id="selectUserComments" parameterType="long" resultType="com.ssafy.enjoytrip.dto.response.UserCommentResponse">
         SELECT 
             c.id AS commentId,
             c.board_id AS boardId,
@@ -90,7 +89,7 @@
     </select>
 
 	<!-- 유저가 좋아요 누른 게시글을 불러오는 sql문 -->
-    <select id="selectUserLikedBoards" parameterType="string" resultType="com.ssafy.enjoytrip.dto.response.UserLikedBoardResponse">
+    <select id="selectUserLikedBoards" parameterType="long" resultType="com.ssafy.enjoytrip.dto.response.UserLikedBoardResponse">
         SELECT 
             b.id AS boardId,
             b.title AS title,
@@ -102,8 +101,17 @@
         ORDER BY b.created_at DESC
     </select>
     
+    <!-- 유저의 해시태그 이름 조회 -->
+    <select id="selectUserHashtagNames" parameterType="long" resultType="string">
+	    SELECT h.tag_name
+	    FROM User_Hashtag uh
+	    JOIN Hashtag h ON uh.hashtag_id = h.id
+	    WHERE uh.user_id = #{userId}
+	    ORDER BY h.id
+	</select>
+    
     <!-- 유저 해시태그 삭제&추가 -->
-    <delete id="deleteUserHashtags" parameterType="string">
+    <delete id="deleteUserHashtags" parameterType="long">
 	    DELETE FROM User_Hashtag 
 	    WHERE user_id = #{userId}
 	</delete>

@@ -18,7 +18,7 @@ public class CommentService {
 	
 	// 1. 댓글 작성
 	@Transactional
-    public boolean createComment(Long boardId, String userId, String content) {
+    public boolean createComment(Long boardId, Long userId, String content) {
         if (content == null || content.trim().isEmpty()) {
             throw new IllegalArgumentException("댓글 내용을 작성하시오.");
         }
@@ -32,7 +32,7 @@ public class CommentService {
     
     // 3. 댓글 삭제 (Delete)
     @Transactional
-    public boolean deleteComment(Long commentId, String userId) {
+    public boolean deleteComment(Long commentId, Long userId) {
         // 삭제 전 DB에서 원본 댓글 데이터 꺼내오기
         CommentResponse comment = commentMapper.selectCommentById(commentId);
         

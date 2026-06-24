@@ -17,6 +17,6 @@ public class MainReviewResponse {
     private String createdAt;
     
     @JsonIgnore
-    private String userId;
+    private Long userId;
     private boolean isOwner;  // 현재 로그인 사람이 이 리뷰 작성자?
 }

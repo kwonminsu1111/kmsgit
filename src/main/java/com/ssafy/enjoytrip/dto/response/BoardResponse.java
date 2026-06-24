@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 public class BoardResponse {
 	private Long id;
-	private String userId;
+	private Long userId;
 	private Long planId;
 	private String title;
 	private String content;

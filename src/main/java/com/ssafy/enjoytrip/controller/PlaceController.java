@@ -31,8 +31,8 @@ public class PlaceController {
 
     private final PlaceService placeService;
 
-    private String getLoginUserId(HttpServletRequest request) {
-	    return (String) request.getAttribute("loginUserId");
+    private Long getLoginUserId(HttpServletRequest request) {
+	    return (Long) request.getAttribute("loginUserId");
 	}
     
     @Operation(summary = "장소 상세 조회 (평점 + 리뷰 목록)", description = "지도에서 특정 마커 클릭 시 해당 장소의 평균 별점과 리뷰 목록 세트를 반환합니다.")
@@ -41,7 +41,7 @@ public class PlaceController {
             @PathVariable Long placeId,
             HttpServletRequest request
     ) {
-    	String userId = getLoginUserId(request);
+    	Long userId = (Long) getLoginUserId(request);
         PlaceDetailResponse detail = placeService.getPlaceDetail(placeId, userId);
         return ResponseEntity.ok(ApiResponse.success("장소 상세 조회 성공", detail));
     }
@@ -53,7 +53,7 @@ public class PlaceController {
             @RequestBody ReviewCreateRequest dto,
             HttpServletRequest request
     ) {
-    	String userId = getLoginUserId(request);
+    	Long userId = getLoginUserId(request);
         boolean isSuccess = placeService.createReview(placeId, userId, dto);
 
         Map<String, Object> response = new HashMap<>();
@@ -72,7 +72,7 @@ public class PlaceController {
             @PathVariable Long reviewId,
             HttpServletRequest request
     ) {
-    	String userId = getLoginUserId(request);
+    	Long userId = getLoginUserId(request);
         placeService.deleteReview(reviewId, userId);
 
         Map<String, Object> response = new HashMap<>();
