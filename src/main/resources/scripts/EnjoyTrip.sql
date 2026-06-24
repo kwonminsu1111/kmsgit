@@ -173,9 +173,15 @@ INSERT INTO Users (id, nickname, email, password, profile_path, reg_date, role) 
 (3, '일반테스터', 'test@ssafy.com', '1234', '/images/profile/default.png', NOW(), 'USER');
 
 -- 기본 해시태그 생성
-INSERT INTO Hashtag (id, tag_name) VALUES  
-(1, '힐링'), (2, '액티비티'), (3, '맛집투어'), (4, '카페투어'), (5, '호캉스'),
-(6, '자연경관'), (7, '역사유적'), (8, '쇼핑'), (9, '혼자여행'), (10, '가족여행');
+INSERT INTO Hashtag (id, tag_name) VALUES
+(1, '힐링'),
+(2, '맛집탐방'),
+(3, '인생샷'),
+(4, '액티비티'),
+(5, '가성비'),
+(6, '가족여행'),
+(7, '바다'),
+(8, '혼여행');
 
 -- 마스터 여행지 데이터
 INSERT INTO Attractions (id) VALUES  
@@ -207,13 +213,13 @@ INSERT INTO Board_Like (board_id, user_id) VALUES
 
 -- 유저 성향 해시태그 데이터
 INSERT INTO User_Hashtag (user_id, hashtag_id) VALUES
-(2, 3), (2, 10), -- ssafy(2)
-(3, 1), (3, 9);  -- testuser(3)
+(2, 1), (2, 4), (2, 7), -- ssafy(2): 힐링, 액티비티, 바다
+(3, 7), (3, 8);  -- testuser(3): 바다, 혼여행
 
 -- 게시물 연동 해시태그 데이터
 INSERT INTO Board_Hashtag (board_id, hashtag_id) VALUES
-(1, 1), (1, 3),
-(2, 7), (2, 3);
+(1, 1), (1, 2), -- 힐링, 맛집탐방
+(2, 7), (2, 8); -- 바다, 혼여행
 
 -- 여행 계획 (Plans) 데이터
 INSERT INTO Plans (id, user_id, title, start_date, end_date, status, created_at) VALUES

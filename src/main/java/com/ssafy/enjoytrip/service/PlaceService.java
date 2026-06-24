@@ -28,7 +28,7 @@ public class PlaceService {
         // 3. 본인 소유 확인 (isOwner) 도장 찍기 로직
         for (MainReviewResponse review : reviews) {
             if (review.getUserId() != null && review.getUserId().equals(currentUserId)) {
-                review.setOwner(true); // DTO 내부의 setOwner(true) 또는 setIsOwner(true) 호출
+                review.setIsOwner(true);
             }
         }
         
@@ -38,7 +38,7 @@ public class PlaceService {
     
     // 리뷰 작성
     @Transactional
-    public boolean createReview(Long placeId, Long userId, ReviewCreateRequest dto) {
+    public Long createReview(Long placeId, Long userId, ReviewCreateRequest dto) {
         
         // 별점이 1점~5점 범위를 벗어나면 DB까지 가지도 못하게 컷
         if (dto.getRate() < 1 || dto.getRate() > 5) {
@@ -54,7 +54,12 @@ public class PlaceService {
         }
         
         // 3. 안전하게 외래키를 참조하여 Reviews 테이블에 인서트
-        return placeMapper.insertReview(placeId, userId, dto) > 0;
+        int inserted = placeMapper.insertReview(placeId, userId, dto);
+        if (inserted == 0) {
+            throw new IllegalStateException("리뷰 등록에 실패했습니다.");
+        }
+
+        return placeMapper.selectLastInsertId();
     }
 
     // 리뷰 삭제

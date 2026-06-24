@@ -18,13 +18,10 @@
 	<!-- 여행 계획 카드 리스트(status : 진행중 or 완료) -->
     <select id="selectPlansByUserIdAndStatus" resultType="com.ssafy.enjoytrip.dto.response.PlanResponse">
         SELECT 
-            id,
-            user_id AS userId,
+            id AS planId,
             title,
             start_date AS startDate,
-            end_date AS endDate,
-            status,
-            created_at AS createdAt
+            end_date AS endDate
         FROM Plans
         WHERE user_id = #{userId}
           AND status = #{status}
@@ -71,11 +68,9 @@
     <!-- 블럭 로딩(조회) -->
     <select id="selectPlanDetailsByPlanId" resultType="com.ssafy.enjoytrip.dto.response.PlanDetailResponse">
         SELECT 
-            id AS detailId,
-            plan_id AS planId,
-            place_id AS placeId,
             sequence,
-            day
+            day,
+            place_id AS placeId
         FROM Plans_Details
         WHERE plan_id = #{planId}
         ORDER BY day ASC, sequence ASC

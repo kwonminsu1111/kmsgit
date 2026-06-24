@@ -29,4 +29,5 @@ public interface UserMapper {
     int deleteUserHashtags(Long userId);
     // 유저 ID와 해시태그 ID를 1:1로 매핑 테이블에 꽂는 도구
     int insertUserHashtag(@Param("userId") Long userId, @Param("hashtagId") Integer hashtagId);
+    Integer selectHashtagIdByName(String tagName);
 }

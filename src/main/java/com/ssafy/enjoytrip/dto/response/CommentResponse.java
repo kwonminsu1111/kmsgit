@@ -2,16 +2,24 @@ package com.ssafy.enjoytrip.dto.response;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 public class CommentResponse {
-    private Long id;            // 댓글 고유 식별 번호 (PK)
-    private Long boardId;       // 원본 게시글 번호
-    private Long userId;      // 댓글 작성자 ID
-    private String nickname;    // 댓글 작성자 닉네임 (Users 테이블과 JOIN)
-    private String content;     // 댓글 내용
-    private LocalDateTime createdAt; // 댓글 작성 시간
+    private Long commentId;
+    private String nickname;
+    private String content;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime createdAt;
+
+    // 내부 권한 검사용
+    @JsonIgnore
+    private Long userId;
 }
+
+// 댓글 목록, 게시글 상세 조회 내부의 각 댓글들

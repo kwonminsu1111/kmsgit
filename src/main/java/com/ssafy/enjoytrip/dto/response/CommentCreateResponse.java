@@ -5,16 +5,15 @@ import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
-@Setter
-public class UserLikedBoardResponse {
-    private Long boardId;
-    private String title;
+@AllArgsConstructor
+public class CommentCreateResponse {
+    private Long commentId;
     private String nickname;
-    private Integer likeCount;
+    private String content;
 
     @JsonProperty("created_at")
     @JsonFormat(pattern = "yyyy-MM-dd")

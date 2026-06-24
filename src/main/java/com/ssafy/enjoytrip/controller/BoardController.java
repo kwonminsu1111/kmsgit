@@ -1,6 +1,8 @@
 package com.ssafy.enjoytrip.controller;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Arrays;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ssafy.enjoytrip.dto.request.BoardCreateRequest;
+import com.ssafy.enjoytrip.dto.request.BoardUpdateRequest;
+import com.ssafy.enjoytrip.dto.response.BoardIdResponse;
+import com.ssafy.enjoytrip.dto.response.BoardLikeResponse;
 import com.ssafy.enjoytrip.dto.response.BoardResponse;
 import com.ssafy.enjoytrip.model.Hashtag;
 import com.ssafy.enjoytrip.service.BoardService;
@@ -25,10 +30,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
-@Tag(name = "Board 컨트롤러", description = "자유게시판 목록 조회 및 상세 보기 API")
+@Tag(name = "Board 컨트롤러", description = "게시글 목록, 상세, 작성, 수정, 삭제 API")
 @RestController
 @RequestMapping("/boards")
-@RequiredArgsConstructor // BoardService를 자동으로 주입해 줍니다.
+@RequiredArgsConstructor
 public class BoardController {
 
     private final BoardService boardService;
@@ -36,109 +41,111 @@ public class BoardController {
     private Long getLoginUserId(HttpServletRequest request) {
         return (Long) request.getAttribute("loginUserId");
     }
-    
-    @Operation(summary = "전체 게시글 목록 조회", description = "게시글을 최신순, 좋아요순, 방문순으로 정렬 & 나의 해시태그로 필터링 합니다.")
+
+    @Operation(summary = "게시글 리스트 보기")
     @GetMapping
     public ResponseEntity<ApiResponse<List<BoardResponse>>> getAllBoards(
-    		@RequestParam(required = false) String region,
-    		@RequestParam(required = false, defaultValue = "latest") String orderBy,
-    		@RequestParam(required = false, defaultValue = "false") boolean myPosts,
-    		@RequestParam(required = false) List<String> tags,
-    		@RequestParam(required = false, defaultValue = "false") boolean myTags,
-    		HttpServletRequest request
+            @RequestParam(required = false) String region,
+            @RequestParam(required = false, defaultValue = "false") boolean myPosts,
+            @RequestParam(required = false) String tags,
+            @RequestParam(required = false, defaultValue = "latest") String orderBy,
+            @RequestParam(required = false, defaultValue = "false") boolean myTags,
+            HttpServletRequest request
     ) {
-    	Long userId = (Long) request.getAttribute("loginUserId");
-    	
-        List<BoardResponse> response = boardService.getAllBoards(region, orderBy, myPosts, userId, tags, myTags);
-        return ResponseEntity.ok(ApiResponse.success("전체 게시글 목록 조회 성공", response));
-    }
-    
-    // 글 작성/수정 시 해시태그 선택 팝업용 전체 리스트 반환 API
-    @Operation(summary = "DB 상의 모든 해시태그 조회", description = "DB 상의 태그 목록을 반환합니다.")
-    @GetMapping("/all-tags")
-    public ResponseEntity<ApiResponse> getAllHashtags() {
-        List<Hashtag> tags = boardService.getAllHashtags();
-        
-        return ResponseEntity.ok(
-            ApiResponse.success("해시태그 전체 목록 조회 성공", tags)
-        );
+        Long userId = getLoginUserId(request);
+        List<String> tagList = tags == null || tags.trim().isEmpty()
+                ? null
+                : Arrays.stream(tags.split(","))
+                        .map(String::trim)
+                        .filter(tag -> !tag.isEmpty())
+                        .toList();
+        List<BoardResponse> response = boardService.getAllBoards(region, orderBy, myPosts, userId, tagList, myTags);
+        return ResponseEntity.ok(ApiResponse.success("게시글 목록 조회가 완료되었습니다.", response));
     }
 
-    @Operation(summary = "게시글 상세 조회", description = "게시글 고유 번호(ID)와 특정 유저의 좋아요 여부도 확인 가능")
+    @Operation(summary = "전체 해시태그 불러오기")
+    @GetMapping("/all-tags")
+    public ResponseEntity<ApiResponse<List<Hashtag>>> getAllHashtags() {
+        List<Hashtag> tags = boardService.getAllHashtags();
+        return ResponseEntity.ok(ApiResponse.success("요청이 성공적입니다.", tags));
+    }
+
+    @Operation(summary = "게시글 상세 보기")
     @GetMapping("/{boardId}")
     public ResponseEntity<ApiResponse<BoardResponse>> getBoard(
             @PathVariable Long boardId,
             HttpServletRequest request
     ) {
-    	Long userId = getLoginUserId(request);
+        Long userId = getLoginUserId(request);
         BoardResponse response = boardService.getBoardById(boardId, userId);
-        
-        if (response != null) {
-            return ResponseEntity.ok(ApiResponse.success("게시글 상세 조회 성공", response));
+        if (response == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("404", "존재하지 않는 게시글입니다."));
         }
-        return ResponseEntity.status(404).body(ApiResponse.error("존재하지 않는 게시글입니다."));
+        return ResponseEntity.ok(ApiResponse.success("게시글 상세 조회가 완료되었습니다.", response));
     }
-    
-    @Operation(summary = "게시글 좋아요 토글", description = "게시글에 좋아요를 등록하거나 취소합니다. 최종 좋아요 완료 여부(true/false)를 반환합니다.")
+
+    @Operation(summary = "좋아요 개수 갱신")
     @PostMapping("/{boardId}/likes")
-    public ResponseEntity<ApiResponse<Boolean>> toggleLike(
+    public ResponseEntity<ApiResponse<BoardLikeResponse>> toggleLike(
             @PathVariable Long boardId,
             HttpServletRequest request
     ) {
-    	Long userId = getLoginUserId(request);
-        boolean isLiked = boardService.toggleLike(boardId, userId);
-        return ResponseEntity.ok(ApiResponse.success(isLiked ? "좋아요 등록 성공" : "좋아요 취소 성공", isLiked));
+        Long userId = getLoginUserId(request);
+        BoardLikeResponse response = boardService.toggleLike(boardId, userId);
+        String message = response.getIsLiked()
+                ? "게시글 좋아요가 등록되었습니다."
+                : "게시글 좋아요가 취소되었습니다.";
+        return ResponseEntity.ok(ApiResponse.success(message, response));
     }
-    
-    // 게시글 작성
-    @Operation(summary = "새 게시글 작성", description = "제목, 내용, 지역, 글쓴이 정보를 받아 새로운 게시글을 등록합니다.")
+
+    @Operation(summary = "게시글 작성")
     @PostMapping
-    public ResponseEntity<ApiResponse<String>> createBoard(
-    		@RequestBody BoardCreateRequest dto,
-    		HttpServletRequest request) {
-    	
-    	Long userId = getLoginUserId(request);
-        boolean isSuccess = boardService.createBoard(dto, userId);
-
-        if (isSuccess) {
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success("게시글 등록 완료", "등록 성공"));
-        }
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("게시글 등록 중 서버 오류가 발생했습니다."));
-    }
-    
-    // 게시글 삭제
-    @Operation(summary = "게시글 삭제", description = "게시글 고유 번호(ID)를 사용하여 특정 게시글을 삭제합니다.")
-    @DeleteMapping("/{boardId}")
-    public ResponseEntity<ApiResponse<String>> deleteBoard(
-            @PathVariable Long boardId,
-            HttpServletRequest request
-    ) {
-    	Long userId = getLoginUserId(request);
-        boolean isDeleted = boardService.deleteBoard(boardId, userId);
-
-        if (isDeleted) {
-            return ResponseEntity.ok(ApiResponse.success("게시글 삭제 성공", null));
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("존재하지 않는 게시글입니다."));
-    }
-    
-    // 게시글 수정
-    @Operation(summary = "게시글 수정", description = "게시글 고유 번호(ID)와 수정된 내용을 받아 특정 게시글을 업데이트합니다.")
-    @PatchMapping("/{boardId}")
-    public ResponseEntity<ApiResponse<String>> updateBoard(
-            @PathVariable Long boardId,
+    public ResponseEntity<ApiResponse<BoardIdResponse>> createBoard(
             @RequestBody BoardCreateRequest dto,
             HttpServletRequest request
     ) {
-    	Long userId = getLoginUserId(request);
-        boolean isUpdated = boardService.updateBoard(boardId, dto, userId);
+        Long userId = getLoginUserId(request);
+        Long boardId = boardService.createBoard(dto, userId);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        "201",
+                        "게시글이 성공적으로 등록되었습니다.",
+                        new BoardIdResponse(boardId)
+                ));
+    }
 
-        if (isUpdated) {
-            return ResponseEntity.ok(ApiResponse.success("게시글 수정 성공", null));
+    @Operation(summary = "게시글 삭제")
+    @DeleteMapping("/{boardId}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deleteBoard(
+            @PathVariable Long boardId,
+            HttpServletRequest request
+    ) {
+        Long userId = getLoginUserId(request);
+        boolean isDeleted = boardService.deleteBoard(boardId, userId);
+        if (!isDeleted) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("404", "존재하지 않는 게시글입니다."));
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("존재하지 않는 게시글입니다."));
+        return ResponseEntity.ok(ApiResponse.success("게시글이 성공적으로 삭제되었습니다.", Map.of()));
+    }
+
+    @Operation(summary = "게시글 수정")
+    @PatchMapping("/{boardId}")
+    public ResponseEntity<ApiResponse<BoardIdResponse>> updateBoard(
+            @PathVariable Long boardId,
+            @RequestBody BoardUpdateRequest dto,
+            HttpServletRequest request
+    ) {
+        Long userId = getLoginUserId(request);
+        boolean isUpdated = boardService.updateBoard(boardId, dto, userId);
+        if (!isUpdated) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("404", "존재하지 않는 게시글입니다."));
+        }
+        return ResponseEntity.ok(ApiResponse.success(
+                "게시글이 성공적으로 수정되었습니다.",
+                new BoardIdResponse(boardId)
+        ));
     }
 }

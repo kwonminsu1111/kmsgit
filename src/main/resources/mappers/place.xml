@@ -39,7 +39,11 @@
         VALUES (#{placeId}, #{userId}, #{dto.rate}, #{dto.content}, NOW())
     </insert>
 
-    <select id="selectReviewWriterId" resultType="string">
+    <select id="selectLastInsertId" resultType="long">
+        SELECT LAST_INSERT_ID()
+    </select>
+
+    <select id="selectReviewWriterId" resultType="long">
         SELECT user_id FROM Reviews WHERE id = #{reviewId}
     </select>
 

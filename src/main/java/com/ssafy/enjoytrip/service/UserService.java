@@ -98,7 +98,11 @@ public class UserService {
         if (dto.getHashtags() != null) {
             userMapper.deleteUserHashtags(userId);
 
-            for (Integer tagId : dto.getHashtags()) {
+            for (String tagName : dto.getHashtags()) {
+                Integer tagId = userMapper.selectHashtagIdByName(tagName);
+                if (tagId == null) {
+                    throw new IllegalArgumentException("존재하지 않는 해시태그입니다: " + tagName);
+                }
                 userMapper.insertUserHashtag(userId, tagId);
             }
         }

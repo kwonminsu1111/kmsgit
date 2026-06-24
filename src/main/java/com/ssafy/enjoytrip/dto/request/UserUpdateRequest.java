@@ -21,6 +21,5 @@ public class UserUpdateRequest {
     @Schema(description = "Base64 프로필 이미지 데이터 (미변경 시 null)", example = "data:image/png;base64,...")
     private String profilePath;
 
-    @Schema(description = "요청은 id, 응답은 name", example = "[1, 2, 3]")
-    private List<Integer> hashtags;
+    private List<String> hashtags;
 }

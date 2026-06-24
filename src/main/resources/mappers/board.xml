@@ -6,18 +6,16 @@
 
     <select id="selectAllBoards" resultType="com.ssafy.enjoytrip.dto.response.BoardResponse">
         SELECT 
-            b.id,
-            b.user_id AS userId,
+            b.id AS boardId,
             u.nickname,
             b.title,
-            b.content,
             start_date AS startDate,
             end_date AS endDate,
             b.hit,
             b.like_count AS likeCount,
             (SELECT COUNT(*) FROM Comments WHERE board_id = b.id) AS commentCount,
             b.region,
-            b.created_at AS createdAt
+            (SELECT COUNT(*) FROM Board_Like WHERE board_id = b.id AND user_id = #{loginUserId}) > 0 AS isLiked
         FROM Boards b
         JOIN Users u ON b.user_id = u.id
         <where> 
@@ -91,10 +89,16 @@
 	    WHERE id = #{boardId}
 	</update>
 
+    <select id="selectLikeCount" resultType="int">
+        SELECT like_count
+        FROM Boards
+        WHERE id = #{boardId}
+    </select>
+
     <select id="selectBoardResponseById" parameterType="map" resultType="com.ssafy.enjoytrip.dto.response.BoardResponse">
         SELECT 
-            b.id,
-            b.user_id AS userId,
+            b.id AS boardId,
+            b.plan_id AS planId,
             u.nickname,
             b.title,
             b.content,
@@ -137,6 +141,12 @@
 	    JOIN Hashtag h ON bh.hashtag_id = h.id
 	    WHERE bh.board_id = #{boardId}
 	</select>
+
+    <select id="selectHashtagIdByName" parameterType="string" resultType="int">
+        SELECT id
+        FROM Hashtag
+        WHERE tag_name = #{tagName}
+    </select>
 	
 	<!-- 해시태그 불러오기 -->
     <select id="selectAllHashtags" resultType="com.ssafy.enjoytrip.model.Hashtag">
@@ -157,11 +167,7 @@
     UPDATE Boards
 	    SET 
 	        title = #{title},
-	        content = #{content},
-	        start_date = #{startDate},
-	        end_date = #{endDate},
-	        region = #{region},
-	        plan_id = #{planId}
+	        content = #{content}
 	    WHERE id = #{id}
 	</update>
 	
