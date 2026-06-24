@@ -62,7 +62,7 @@ CREATE TABLE Attractions (
 CREATE TABLE Plans (
     id           BIGINT        NOT NULL AUTO_INCREMENT,
     user_id      BIGINT        NOT NULL, -- ⭕ Users(id) 참조를 위해 BIGINT 고정
-    title        VARCHAR(20)   NOT NULL,
+    title        VARCHAR(100)   NOT NULL,
     start_date   DATE          NULL,
     end_date     DATE          NULL,
     status       ENUM('ONGOING', 'COMPLETED') NOT NULL DEFAULT 'ONGOING',
@@ -170,7 +170,8 @@ SET FOREIGN_KEY_CHECKS = 1;
 INSERT INTO Users (id, nickname, email, password, profile_path, reg_date, role) VALUES  
 (1, '최고관리자', 'admin@ssafy.com', '1234', '/images/profile/admin.png', NOW(), 'ADMIN'),
 (2, '김싸피', 'ssafy@ssafy.com', '1234', '/images/profile/default.png', NOW(), 'USER'),
-(3, '일반테스터', 'test@ssafy.com', '1234', '/images/profile/default.png', NOW(), 'USER');
+(3, '일반테스터', 'test@ssafy.com', '1234', '/images/profile/default.png', NOW(), 'USER'),
+(4, '싸피킴', 'abc@ssafy.com', '$2a$10$Yt6N.gfTzN0D16u4W5X7guS5Zaus2m51vmn9ZfyI2j9Jg5FMyB68O', '/images/profile/default.png', NOW(), 'USER');
 
 -- 기본 해시태그 생성
 INSERT INTO Hashtag (id, tag_name) VALUES
@@ -185,7 +186,7 @@ INSERT INTO Hashtag (id, tag_name) VALUES
 
 -- 마스터 여행지 데이터
 INSERT INTO Attractions (id) VALUES  
-(101), (102), (103), (201), (202), (203), (301), (302), (401), (402);
+(101), (102), (103), (201), (202), (203), (301), (302), (303), (401), (402);
 
 -- 테스트용 게시글 추가 (user_id를 정수 식별값 1, 2, 3으로 매핑)
 INSERT INTO Boards (id, user_id, plan_id, title, content, start_date, end_date, hit, created_at, like_count, region)
@@ -195,7 +196,7 @@ INSERT INTO Boards (id, user_id, plan_id, title, content, start_date, end_date, 
 VALUES (2, 3, NULL, '서울 경복궁 야간개장 후기', '진짜 야경이 끝내줍니다. 꼭 가보세요!', '2026-08-10', '2026-08-11', 15, NOW(), 1, '서울');
 
 INSERT INTO Boards (id, user_id, plan_id, title, content, start_date, end_date, hit, created_at, like_count, region)
-    VALUES (3, 1, NULL, '강릉 커피거리 추천', '안목해변에서 마시는 커피 최고에요.', '2026-09-05', '2026-09-05', 102, NOW(), 5, '강원특별자치도');
+VALUES (3, 1, NULL, '강릉 커피거리 추천', '안목해변에서 마시는 커피 최고에요.', '2026-09-05', '2026-09-05', 102, NOW(), 5, '강원특별자치도');
 
 -- 게시글 댓글 데이터 (user_id 교체)
 INSERT INTO Comments (board_id, user_id, content, created_at) VALUES  
@@ -223,15 +224,22 @@ INSERT INTO Board_Hashtag (board_id, hashtag_id) VALUES
 
 -- 여행 계획 (Plans) 데이터
 INSERT INTO Plans (id, user_id, title, start_date, end_date, status, created_at) VALUES
-(1, 2, '서울 먹부림 여행', '2026-07-10', '2026-07-11', 'ONGOING', NOW()),
-(2, 2, '제주 호캉스&힐링', '2026-05-01', '2026-05-03', 'COMPLETED', '2026-05-01 10:00:00'),
-(3, 3, '강릉 바다 혼행', '2026-08-20', '2026-08-20', 'ONGOING', NOW());
+(101, 4, '영덕 대게 맛집 1박 2일 테스트 코스', '2026-07-15', '2026-07-17', 'COMPLETED', NOW()),
+(102, 4, '여수 밤바다 힐링 테스트 여행', '2026-08-01', '2026-08-03', 'COMPLETED', NOW());
 
--- 여행 세부 계획 (Plans_Details) 데이터
-INSERT INTO Plans_Details (plan_id, place_id, day, sequence) VALUES
-(1, 101, 1, 1), (1, 102, 1, 2), (1, 103, 2, 1),
-(2, 201, 1, 1), (2, 202, 2, 1), (2, 203, 2, 2),
-(3, 401, 1, 1), (3, 402, 1, 2);
+-- 101번 계획 상세 일정
+INSERT INTO Plans_Details (place_id, plan_id, sequence, day)
+VALUES
+(201, 101, 1, 1),
+(202, 101, 2, 1),
+(203, 101, 1, 2);
+
+-- 102번 계획 상세 일정
+INSERT INTO Plans_Details (place_id, plan_id, sequence, day)
+VALUES
+(301, 102, 1, 1),
+(302, 102, 2, 1),
+(303, 102, 1, 2);
 
 -- 장소 리뷰 데이터 (user_id 교체)
 INSERT INTO Reviews (place_id, user_id, rate, content, created_at) VALUES
