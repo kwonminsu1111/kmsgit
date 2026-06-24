@@ -1,11 +1,12 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
-CREATE DATABASE IF NOT EXISTS enjoytrip;
+CREATE DATABASE IF NOT EXISTS enjoytrip
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_0900_ai_ci;
 
 USE enjoytrip;
 
--- 기존 테이블이 존재할 경우 안전하게 삭제 (초기화 목적)
-DROP TABLE IF EXISTS Board_Hashtag;
+DROP TABLE IF EXISTS board_hashtag;
 DROP TABLE IF EXISTS Board_Like;
 DROP TABLE IF EXISTS Comments;
 DROP TABLE IF EXISTS Reviews;
@@ -17,124 +18,106 @@ DROP TABLE IF EXISTS Plans;
 DROP TABLE IF EXISTS Attractions;
 DROP TABLE IF EXISTS Users;
 
--- ==========================================
--- 1. 유저 (Users)
--- ==========================================
 CREATE TABLE Users (
-    id            BIGINT        NOT NULL AUTO_INCREMENT, -- ⭕ 자바 Long과 매핑되는 숫자기반 자동증가 PK
-    nickname      VARCHAR(20)   NOT NULL,
-    email         VARCHAR(50)   NOT NULL,
-    password      VARCHAR(255)  NOT NULL,
-    profile_path  TEXT          NOT NULL,
-    reg_date      DATETIME      NOT NULL,
+    id            BIGINT       NOT NULL AUTO_INCREMENT,
+    nickname      VARCHAR(20)  NOT NULL,
+    email         VARCHAR(50)  NOT NULL,
+    password      VARCHAR(255) NOT NULL,
+    profile_path  TEXT         NOT NULL,
+    reg_date      DATETIME     NOT NULL,
     role          ENUM('USER', 'ADMIN') NOT NULL DEFAULT 'USER',
     PRIMARY KEY (id),
     UNIQUE KEY unique_user_email (email)
 );
 
--- ==========================================
--- 2. 해시태그 및 유저매핑
--- ==========================================
 CREATE TABLE Hashtag (
-    id           BIGINT        NOT NULL AUTO_INCREMENT,
-    tag_name     VARCHAR(255)  NOT NULL,
+    id        BIGINT       NOT NULL AUTO_INCREMENT,
+    tag_name  VARCHAR(255) NOT NULL,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE User_Hashtag (
-    id           BIGINT        NOT NULL AUTO_INCREMENT,
-    user_id      BIGINT        NOT NULL, -- ⭕ Users(id) 참조를 위해 BIGINT 고정
-    hashtag_id   BIGINT        NOT NULL,
+    id          BIGINT NOT NULL AUTO_INCREMENT,
+    user_id     BIGINT NOT NULL,
+    hashtag_id  BIGINT NOT NULL,
     PRIMARY KEY (id)
 );
 
--- ==========================================
--- 3. 지역 및 여행지 마스터 데이터
--- ==========================================
 CREATE TABLE Attractions (
-    id              BIGINT        NOT NULL,
+    id BIGINT NOT NULL,
     PRIMARY KEY (id)
 );
 
--- ==========================================
--- 4. 여행 계획 (Plans)
--- ==========================================
 CREATE TABLE Plans (
-    id           BIGINT        NOT NULL AUTO_INCREMENT,
-    user_id      BIGINT        NOT NULL, -- ⭕ Users(id) 참조를 위해 BIGINT 고정
-    title        VARCHAR(100)   NOT NULL,
-    start_date   DATE          NULL,
-    end_date     DATE          NULL,
-    status       ENUM('ONGOING', 'COMPLETED') NOT NULL DEFAULT 'ONGOING',
-    created_at   DATETIME      NOT NULL,
+    id          BIGINT       NOT NULL AUTO_INCREMENT,
+    user_id     BIGINT       NOT NULL,
+    title       VARCHAR(100) NOT NULL,
+    start_date  DATE         NULL,
+    end_date    DATE         NULL,
+    status      ENUM('ONGOING', 'COMPLETED') NOT NULL DEFAULT 'ONGOING',
+    created_at  DATETIME     NOT NULL,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE Plans_Details (
-    id           BIGINT        NOT NULL AUTO_INCREMENT,
-    place_id     BIGINT        NOT NULL,
-    plan_id      BIGINT        NOT NULL, 
-    sequence     INT           NOT NULL,
-    day          INT           NOT NULL,
+    id        BIGINT NOT NULL AUTO_INCREMENT,
+    place_id  BIGINT NOT NULL,
+    plan_id   BIGINT NOT NULL,
+    sequence  INT    NOT NULL,
+    day       INT    NOT NULL,
     PRIMARY KEY (id)
 );
 
--- ==========================================
--- 5. 커뮤니티 (게시판, 댓글, 좋아요, 리뷰)
--- ==========================================
 CREATE TABLE Boards (
-    id           BIGINT        NOT NULL AUTO_INCREMENT,
-    user_id      BIGINT        NOT NULL, -- ⭕ Users(id) 참조를 위해 BIGINT 고정
-    plan_id      BIGINT        NULL,
-    title        VARCHAR(100)  NOT NULL,
-    content      TEXT          NOT NULL,
-    start_date   DATE          NULL,     
-    end_date     DATE          NULL,     
-    hit          INT           NOT NULL DEFAULT 0,
-    created_at   DATETIME      NOT NULL,
-    like_count   INT           NOT NULL DEFAULT 0,
-    region       VARCHAR(20)   NULL,
+    id          BIGINT       NOT NULL AUTO_INCREMENT,
+    user_id     BIGINT       NOT NULL,
+    plan_id     BIGINT       NULL,
+    title       VARCHAR(100) NOT NULL,
+    content     TEXT         NOT NULL,
+    start_date  DATE         NULL,
+    end_date    DATE         NULL,
+    hit         INT          NOT NULL DEFAULT 0,
+    created_at  DATETIME     NOT NULL,
+    like_count  INT          NOT NULL DEFAULT 0,
+    region      VARCHAR(20)  NULL,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE Comments (
-    id           BIGINT        NOT NULL AUTO_INCREMENT,
-    board_id     BIGINT        NOT NULL,
-    user_id      BIGINT        NOT NULL, -- ⭕ Users(id) 참조를 위해 BIGINT 고정
-    content      TEXT          NOT NULL,
-    created_at   DATETIME      NOT NULL,
+    id          BIGINT   NOT NULL AUTO_INCREMENT,
+    board_id    BIGINT   NOT NULL,
+    user_id     BIGINT   NOT NULL,
+    content     TEXT     NOT NULL,
+    created_at  DATETIME NOT NULL,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE Board_Like (
-    id           BIGINT        NOT NULL AUTO_INCREMENT,
-    board_id     BIGINT        NOT NULL,
-    user_id      BIGINT        NOT NULL, -- ⭕ Users(id) 참조를 위해 BIGINT 고정
+    id        BIGINT NOT NULL AUTO_INCREMENT,
+    board_id  BIGINT NOT NULL,
+    user_id   BIGINT NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY unique_like (board_id, user_id)
 );
 
-CREATE TABLE Board_Hashtag (
-    id           BIGINT        NOT NULL AUTO_INCREMENT,
-    hashtag_id   BIGINT        NOT NULL,
-    board_id     BIGINT        NOT NULL,
+CREATE TABLE board_hashtag (
+    id          BIGINT NOT NULL AUTO_INCREMENT,
+    hashtag_id  BIGINT NOT NULL,
+    board_id    BIGINT NOT NULL,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE Reviews (
-    id           BIGINT        NOT NULL AUTO_INCREMENT,
-    place_id     BIGINT        NOT NULL, 
-    user_id      BIGINT        NOT NULL, -- ⭕ Users(id) 참조를 위해 BIGINT 고정
-    rate         INT           NOT NULL, 
-    content      TEXT          NOT NULL, 
-    created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id          BIGINT   NOT NULL AUTO_INCREMENT,
+    place_id    BIGINT   NOT NULL,
+    user_id     BIGINT   NOT NULL,
+    rate        INT      NOT NULL,
+    content     TEXT     NOT NULL,
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     CONSTRAINT CK_Review_Rate CHECK (rate BETWEEN 1 AND 5)
 );
 
--- ==========================================
--- 6. 외래키(FK) 제약조건 연결 일괄 추가
--- ==========================================
 ALTER TABLE User_Hashtag ADD CONSTRAINT FK_UserHashtag_User FOREIGN KEY (user_id) REFERENCES Users (id) ON DELETE CASCADE;
 ALTER TABLE User_Hashtag ADD CONSTRAINT FK_UserHashtag_Tag FOREIGN KEY (hashtag_id) REFERENCES Hashtag (id) ON DELETE CASCADE;
 
@@ -152,28 +135,20 @@ ALTER TABLE Comments ADD CONSTRAINT FK_Comments_User FOREIGN KEY (user_id) REFER
 ALTER TABLE Board_Like ADD CONSTRAINT FK_Like_Board FOREIGN KEY (board_id) REFERENCES Boards (id) ON DELETE CASCADE;
 ALTER TABLE Board_Like ADD CONSTRAINT FK_Like_User FOREIGN KEY (user_id) REFERENCES Users (id) ON DELETE CASCADE;
 
-ALTER TABLE Board_Hashtag ADD CONSTRAINT FK_BoardTag_Hashtag FOREIGN KEY (hashtag_id) REFERENCES Hashtag (id) ON DELETE CASCADE;
-ALTER TABLE Board_Hashtag ADD CONSTRAINT FK_BoardTag_Board FOREIGN KEY (board_id) REFERENCES Boards (id) ON DELETE CASCADE;
+ALTER TABLE board_hashtag ADD CONSTRAINT FK_BoardTag_Hashtag FOREIGN KEY (hashtag_id) REFERENCES Hashtag (id) ON DELETE CASCADE;
+ALTER TABLE board_hashtag ADD CONSTRAINT FK_BoardTag_Board FOREIGN KEY (board_id) REFERENCES Boards (id) ON DELETE CASCADE;
 
 ALTER TABLE Reviews ADD CONSTRAINT FK_Review_Place FOREIGN KEY (place_id) REFERENCES Attractions (id) ON DELETE CASCADE;
 ALTER TABLE Reviews ADD CONSTRAINT FK_Review_User FOREIGN KEY (user_id) REFERENCES Users (id) ON DELETE CASCADE;
 
--- 외래키 체크 설정을 다시 원상복구 시킵니다.
 SET FOREIGN_KEY_CHECKS = 1;
 
-
--- ==========================================
--- 7. 더미 데이터 삽입 (DML)
--- ==========================================
-
--- [식별 매핑 규칙] 1: admin, 2: ssafy, 3: testuser
-INSERT INTO Users (id, nickname, email, password, profile_path, reg_date, role) VALUES  
+INSERT INTO Users (id, nickname, email, password, profile_path, reg_date, role) VALUES
 (1, '최고관리자', 'admin@ssafy.com', '1234', '/images/profile/admin.png', NOW(), 'ADMIN'),
 (2, '김싸피', 'ssafy@ssafy.com', '1234', '/images/profile/default.png', NOW(), 'USER'),
 (3, '일반테스터', 'test@ssafy.com', '1234', '/images/profile/default.png', NOW(), 'USER'),
 (4, '싸피킴', 'abc@ssafy.com', '$2a$10$Yt6N.gfTzN0D16u4W5X7guS5Zaus2m51vmn9ZfyI2j9Jg5FMyB68O', '/images/profile/default.png', NOW(), 'USER');
 
--- 기본 해시태그 생성
 INSERT INTO Hashtag (id, tag_name) VALUES
 (1, '힐링'),
 (2, '맛집탐방'),
@@ -184,75 +159,52 @@ INSERT INTO Hashtag (id, tag_name) VALUES
 (7, '바다'),
 (8, '혼여행');
 
--- 마스터 여행지 데이터
-INSERT INTO Attractions (id) VALUES  
+INSERT INTO Attractions (id) VALUES
 (101), (102), (103), (201), (202), (203), (301), (302), (303), (401), (402);
 
--- 테스트용 게시글 추가 (user_id를 정수 식별값 1, 2, 3으로 매핑)
-INSERT INTO Boards (id, user_id, plan_id, title, content, start_date, end_date, hit, created_at, like_count, region)
-VALUES (1, 2, NULL, '제주도 3박 4일 꿀코스 공유합니다', '진짜 역대급 힐링 여행이었습니다. 꼭 가보세요!', '2026-07-01', '2026-07-04', 0, NOW(), 0, '제주도');
-
-INSERT INTO Boards (id, user_id, plan_id, title, content, start_date, end_date, hit, created_at, like_count, region)
-VALUES (2, 3, NULL, '서울 경복궁 야간개장 후기', '진짜 야경이 끝내줍니다. 꼭 가보세요!', '2026-08-10', '2026-08-11', 15, NOW(), 1, '서울');
-
-INSERT INTO Boards (id, user_id, plan_id, title, content, start_date, end_date, hit, created_at, like_count, region)
-VALUES (3, 1, NULL, '강릉 커피거리 추천', '안목해변에서 마시는 커피 최고에요.', '2026-09-05', '2026-09-05', 102, NOW(), 5, '강원특별자치도');
-
--- 게시글 댓글 데이터 (user_id 교체)
-INSERT INTO Comments (board_id, user_id, content, created_at) VALUES  
-(1, 2, '와 제가 찾던 코스네요! 저장해갑니다 ㅎㅎ', NOW()),
-(1, 2, '혹시 두 번째 날에 갔던 카페 이름이 뭔지 알 수 있을까요?', NOW()),
-(1, 3, '와 제가 찾던 코스네요! 저장해갑니다 ㅎㅎ', NOW()),
-(1, 1, '혹시 두 번째 날에 갔던 카페 이름이 뭔지 알 수 있을까요?', NOW()),
-(2, 2, '저도 지난주에 다녀왔는데 야경 진짜 대박이더라고요!', NOW());
-
--- 게시글 좋아요 데이터 (user_id 교체)
-INSERT INTO Board_Like (board_id, user_id) VALUES  
-(1, 2), -- 1번글에 ssafy(2)가 좋아요
-(2, 2), -- 2번글에 ssafy(2)가 좋아요
-(2, 1); -- 2번글에 admin(1)이 좋아요
-
--- 유저 성향 해시태그 데이터
-INSERT INTO User_Hashtag (user_id, hashtag_id) VALUES
-(2, 1), (2, 4), (2, 7), -- ssafy(2): 힐링, 액티비티, 바다
-(3, 7), (3, 8);  -- testuser(3): 바다, 혼여행
-
--- 게시물 연동 해시태그 데이터
-INSERT INTO Board_Hashtag (board_id, hashtag_id) VALUES
-(1, 1), (1, 2), -- 힐링, 맛집탐방
-(2, 7), (2, 8); -- 바다, 혼여행
-
--- 여행 계획 (Plans) 데이터
 INSERT INTO Plans (id, user_id, title, start_date, end_date, status, created_at) VALUES
+(1, 2, '서울 먹부림 여행', '2026-07-10', '2026-07-11', 'ONGOING', NOW()),
+(2, 2, '제주 호캉스 힐링', '2026-05-01', '2026-05-03', 'COMPLETED', NOW()),
+(3, 3, '강릉 바다 혼행', '2026-08-20', '2026-08-20', 'ONGOING', NOW()),
 (101, 4, '영덕 대게 맛집 1박 2일 테스트 코스', '2026-07-15', '2026-07-17', 'COMPLETED', NOW()),
 (102, 4, '여수 밤바다 힐링 테스트 여행', '2026-08-01', '2026-08-03', 'COMPLETED', NOW());
 
--- 101번 계획 상세 일정
-INSERT INTO Plans_Details (place_id, plan_id, sequence, day)
-VALUES
+INSERT INTO Plans_Details (place_id, plan_id, sequence, day) VALUES
 (201, 101, 1, 1),
 (202, 101, 2, 1),
-(203, 101, 1, 2);
-
--- 102번 계획 상세 일정
-INSERT INTO Plans_Details (place_id, plan_id, sequence, day)
-VALUES
+(203, 101, 1, 2),
 (301, 102, 1, 1),
 (302, 102, 2, 1),
 (303, 102, 1, 2);
 
--- 장소 리뷰 데이터 (user_id 교체)
-INSERT INTO Reviews (place_id, user_id, rate, content, created_at) VALUES
-(101, 2, 5, '경복궁 야간개장은 진짜 무조건 가야합니다. 한복 입으면 무료라 너무 좋았어요!', '2026-06-10 14:00:00'),
-(101, 3, 4, '낮에 가도 웅장하고 산책하기 딱 좋습니다. 외국인 친구 데려가기 좋아요.', '2026-06-11 11:20:00'),
-(101, 1, 4, '관리가 아주 잘 되어 있어서 서울 중심 명소답네요.', '2026-06-12 09:15:00'),
-(102, 2, 5, '평양냉면의 바이블! 고기 육수 향이 아주 진하고 만두도 최고입니다.', '2026-06-13 18:30:00'),
-(102, 3, 5, '웨이팅은 길지만 회전율 빠르고 진짜 맛있어요. 인생 평냉집 등극.', '2026-06-14 13:00:00'),
-(201, 2, 5, '새벽에 일출 보러 올라갔는데 계단은 힘들었지만 풍경이 예술입니다.', '2026-06-12 06:00:00'),
-(201, 1, 5, '제주 정취를 제대로 느낄 수 있는 유네스코 명소 대강추.', '2026-06-13 15:40:00'),
-(201, 3, 4, '바람이 많이 불긴 하지만 탁 트인 바다 전망이 가슴을 뻥 뚫어주네요.', '2026-06-14 16:20:00'),
-(202, 2, 4, '통갈치구이 비주얼 압도적이고 직원분이 살을 다 발라주셔서 편하게 먹음!', '2026-06-14 12:00:00'),
-(202, 3, 3, '맛은 훌륭한데 밑반찬 종류에 비해 가격대가 조금 나가는 편입니다.', '2026-06-15 19:10:00');
+INSERT INTO Boards (id, user_id, plan_id, title, content, start_date, end_date, hit, created_at, like_count, region) VALUES
+(1, 2, 2, '제주도 3박 4일 꿀코스 공유합니다', '진짜 힐링 여행이었습니다. 꼭 가보세요.', '2026-05-01', '2026-05-03', 0, NOW(), 0, '제주'),
+(2, 3, NULL, '서울 경복궁 야간개장 후기', '야경이 정말 예쁩니다. 꼭 가보세요.', '2026-08-10', '2026-08-11', 15, NOW(), 1, '서울'),
+(3, 1, NULL, '강릉 커피거리 추천', '안목해변에서 마시는 커피 최고예요.', '2026-09-05', '2026-09-05', 102, NOW(), 5, '강원');
 
--- 외래키 체크 설정을 다시 원상복구 시킵니다.
-SET FOREIGN_KEY_CHECKS = 1;
+INSERT INTO Comments (board_id, user_id, content, created_at) VALUES
+(1, 2, '제가 찾던 코스예요. 공유 감사합니다.', NOW()),
+(1, 3, '다음 여행 때 참고할게요.', NOW()),
+(1, 1, '카페 이름도 궁금합니다.', NOW()),
+(2, 2, '야경 진짜 좋더라고요.', NOW());
+
+INSERT INTO Board_Like (board_id, user_id) VALUES
+(1, 2),
+(2, 2),
+(2, 1);
+
+INSERT INTO User_Hashtag (user_id, hashtag_id) VALUES
+(2, 1), (2, 4), (2, 7),
+(3, 7), (3, 8),
+(4, 1), (4, 2), (4, 6);
+
+INSERT INTO board_hashtag (board_id, hashtag_id) VALUES
+(1, 1), (1, 2), (1, 6),
+(2, 7), (2, 8),
+(3, 2), (3, 5);
+
+INSERT INTO Reviews (place_id, user_id, rate, content, created_at) VALUES
+(101, 2, 5, '경복궁 야간개장은 무조건 가야 합니다.', '2026-06-10 14:00:00'),
+(101, 3, 4, '낮에 가도 웅장하고 산책하기 좋습니다.', '2026-06-11 11:20:00'),
+(201, 2, 5, '새벽 일출 풍경이 정말 좋았습니다.', '2026-06-12 06:00:00'),
+(202, 3, 4, '직원분들이 친절하고 접근성이 좋았습니다.', '2026-06-14 12:00:00');
