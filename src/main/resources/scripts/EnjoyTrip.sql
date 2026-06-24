@@ -1,22 +1,10 @@
-SET FOREIGN_KEY_CHECKS = 0;
+DROP DATABASE IF EXISTS enjoytrip;
 
-CREATE DATABASE IF NOT EXISTS enjoytrip
+CREATE DATABASE enjoytrip
   DEFAULT CHARACTER SET utf8mb4
   DEFAULT COLLATE utf8mb4_0900_ai_ci;
 
 USE enjoytrip;
-
-DROP TABLE IF EXISTS board_hashtag;
-DROP TABLE IF EXISTS Board_Like;
-DROP TABLE IF EXISTS Comments;
-DROP TABLE IF EXISTS Reviews;
-DROP TABLE IF EXISTS User_Hashtag;
-DROP TABLE IF EXISTS Hashtag;
-DROP TABLE IF EXISTS Boards;
-DROP TABLE IF EXISTS Plans_Details;
-DROP TABLE IF EXISTS Plans;
-DROP TABLE IF EXISTS Attractions;
-DROP TABLE IF EXISTS Users;
 
 CREATE TABLE Users (
     id            BIGINT       NOT NULL AUTO_INCREMENT,
@@ -140,8 +128,6 @@ ALTER TABLE board_hashtag ADD CONSTRAINT FK_BoardTag_Board FOREIGN KEY (board_id
 
 ALTER TABLE Reviews ADD CONSTRAINT FK_Review_Place FOREIGN KEY (place_id) REFERENCES Attractions (id) ON DELETE CASCADE;
 ALTER TABLE Reviews ADD CONSTRAINT FK_Review_User FOREIGN KEY (user_id) REFERENCES Users (id) ON DELETE CASCADE;
-
-SET FOREIGN_KEY_CHECKS = 1;
 
 INSERT INTO Users (id, nickname, email, password, profile_path, reg_date, role) VALUES
 (1, '최고관리자', 'admin@ssafy.com', '1234', '/images/profile/admin.png', NOW(), 'ADMIN'),
