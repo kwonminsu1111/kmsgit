@@ -11,3 +11,5 @@ public class PlanAutocompleteResponse {
     private String endDate;
     private List<String> places;  // 방문한 장소들의 리스트
 }
+
+// 게시글 작성 자동완성용

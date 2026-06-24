@@ -6,9 +6,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PlanDetailResponse {
-    private Long detailId;
-    private Long planId;  // 어떤 일정에 속해있는가?
+    private int sequence;
+    private int day;
     private Long placeId;
-    private int day;  // 일차
-    private int sequence;  // 일차 내 순서
 }
+
+// 플랜 안에 있는 장소 블록 하나 조회

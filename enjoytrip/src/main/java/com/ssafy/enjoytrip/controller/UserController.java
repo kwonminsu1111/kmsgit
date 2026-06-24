@@ -33,13 +33,14 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
-@Tag(name = "User 컨트롤러", description = "User 회원가입, 로그인, 프로필 API")
+@Tag(name = "User Controller", description = "회원가입, 로그인, 마이페이지")
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
 
     private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
+    private static final String SUCCESS_MESSAGE = "요청이 성공적으로 처리되었습니다.";
 
     private final UserService userService;
     private final JwtUtil jwtUtil;
@@ -48,19 +49,15 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<String>> signup(@RequestBody UserSignupRequest dto) {
         userService.signup(dto);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("회원가입 성공", "가입 완료"));
+        return ResponseEntity.ok(ApiResponse.success(SUCCESS_MESSAGE, null));
     }
 
     @Operation(summary = "로그인")
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<UserLoginResponse>> login(@RequestBody UserLoginRequest dto) {
-        User loginUser = userService.login(dto.getEmail(), dto.getPassword());
-
-        if (loginUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("아이디 또는 비밀번호가 일치하지 않습니다."));
-        }
+        String email = dto == null ? null : dto.getEmail();
+        String password = dto == null ? null : dto.getPassword();
+        User loginUser = userService.login(email, password);
 
         String accessToken = jwtUtil.createAccessToken(loginUser.getId());
         String refreshToken = jwtUtil.createRefreshToken(loginUser.getId());
@@ -69,7 +66,7 @@ public class UserController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
-                .body(ApiResponse.success("로그인이 성공적으로 완료되었습니다.", userResponse));
+                .body(ApiResponse.success(SUCCESS_MESSAGE, userResponse));
     }
 
     @Operation(summary = "로그아웃")
@@ -79,7 +76,7 @@ public class UserController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, expiredRefreshTokenCookie.toString())
-                .body(ApiResponse.success("로그아웃이 성공적으로 완료되었습니다.", "로그아웃 완료"));
+                .body(ApiResponse.success(SUCCESS_MESSAGE, null));
     }
 
     @Operation(summary = "Access Token Refresh")
@@ -107,11 +104,14 @@ public class UserController {
     public ResponseEntity<ApiResponse<String>> deleteUser(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute(JwtUtil.REQUEST_ATTRIBUTE_NAME);
         userService.deleteUser(userId);
+        ResponseCookie expiredRefreshTokenCookie = expireRefreshTokenCookie();
 
-        return ResponseEntity.ok(ApiResponse.success("회원 탈퇴가 성공적으로 완료되었습니다.", "탈퇴 완료"));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, expiredRefreshTokenCookie.toString())
+                .body(ApiResponse.success(SUCCESS_MESSAGE, null));
     }
 
-    @Operation(summary = "유저 프로필 조회")
+    @Operation(summary = "회원 정보 조회")
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserProfileResponse>> getMyInfo(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute(JwtUtil.REQUEST_ATTRIBUTE_NAME);
@@ -119,13 +119,13 @@ public class UserController {
 
         if (userProfileResponse == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("존재하지 않는 회원입니다."));
+                    .body(ApiResponse.error("404", "존재하지 않는 회원입니다."));
         }
 
-        return ResponseEntity.ok(ApiResponse.success("회원 정보 조회가 성공적으로 완료되었습니다.", userProfileResponse));
+        return ResponseEntity.ok(ApiResponse.success(SUCCESS_MESSAGE, userProfileResponse));
     }
 
-    @Operation(summary = "유저 정보 수정")
+    @Operation(summary = "회원 정보 수정")
     @PatchMapping("/me")
     public ResponseEntity<ApiResponse<String>> updateMyInfo(
             @RequestBody UserUpdateRequest updateRequest,
@@ -133,26 +133,25 @@ public class UserController {
     ) {
         Long userId = (Long) request.getAttribute(JwtUtil.REQUEST_ATTRIBUTE_NAME);
         userService.updateUser(userId, updateRequest);
-        return ResponseEntity.ok(ApiResponse.success("회원 정보 수정이 성공적으로 완료되었습니다.", "수정 완료"));
+        return ResponseEntity.ok(ApiResponse.success(SUCCESS_MESSAGE, null));
     }
 
-    @Operation(summary = "유저 댓글 조회")
+    @Operation(summary = "내 댓글 게시글 조회")
     @GetMapping("/me/comments")
     public ResponseEntity<ApiResponse<List<UserCommentResponse>>> getUserComments(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute(JwtUtil.REQUEST_ATTRIBUTE_NAME);
         List<UserCommentResponse> response = userService.getUserComments(userId);
-        return ResponseEntity.ok(ApiResponse.success("내가 작성한 댓글 목록 조회가 성공적으로 완료되었습니다.", response));
+        return ResponseEntity.ok(ApiResponse.success("내 댓글 게시글 조회 성공", response));
     }
 
-    @Operation(summary = "유저가 좋아요 누른 게시글 조회")
+    @Operation(summary = "좋아요 누른 게시글 조회")
     @GetMapping("/me/liked-boards")
     public ResponseEntity<ApiResponse<List<UserLikedBoardResponse>>> getUserLikedBoards(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute(JwtUtil.REQUEST_ATTRIBUTE_NAME);
         List<UserLikedBoardResponse> response = userService.getUserLikedBoards(userId);
-        return ResponseEntity.ok(ApiResponse.success("내가 좋아요 한 게시글 목록 조회가 성공적으로 완료되었습니다.", response));
+        return ResponseEntity.ok(ApiResponse.success("내가 좋아요를 누른 게시글 조회 성공", response));
     }
 
-    // RT 생성
     private ResponseCookie createRefreshTokenCookie(String refreshToken) {
         return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, refreshToken)
                 .httpOnly(true)
@@ -163,7 +162,6 @@ public class UserController {
                 .build();
     }
 
-    // RT 만료 처리
     private ResponseCookie expireRefreshTokenCookie() {
         return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, "")
                 .httpOnly(true)
@@ -174,7 +172,6 @@ public class UserController {
                 .build();
     }
 
-    // 쿠키에 담긴 RT 추출
     private String extractRefreshToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {

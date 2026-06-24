@@ -9,13 +9,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class BoardCreateRequest {
-    private Long planId;
+public class BoardUpdateRequest {
     private String title;
     private String content;
-    private String region;
-    private String startDate;
-    private String endDate;
 
     @JsonAlias("hashtags")
     private List<String> tags;

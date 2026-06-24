@@ -1,6 +1,5 @@
 package com.ssafy.enjoytrip.controller;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,7 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ssafy.enjoytrip.dto.request.PlanCreateRequest;
 import com.ssafy.enjoytrip.dto.request.PlanDetailRequest;
 import com.ssafy.enjoytrip.dto.request.PlanSaveRequest;
+import com.ssafy.enjoytrip.dto.request.PlanTitleUpdateRequest;
 import com.ssafy.enjoytrip.dto.response.PlanAutocompleteResponse;
+import com.ssafy.enjoytrip.dto.response.PlanDetailViewResponse;
+import com.ssafy.enjoytrip.dto.response.PlanIdResponse;
 import com.ssafy.enjoytrip.dto.response.PlanResponse;
 import com.ssafy.enjoytrip.service.PlanService;
 import com.ssafy.enjoytrip.util.ApiResponse;
@@ -29,105 +31,113 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
-@Tag(name = "Plan 컨트롤러", description = "여행 플래너 카드 CRUD 및 일차별 상세 동선 제어 컨트롤러")
+@Tag(name = "Plan 컨트롤러", description = "여행 계획 CRUD 및 상세 일정 API")
 @RestController
 @RequestMapping("/plans")
 @RequiredArgsConstructor
 public class PlanController {
 
     private final PlanService planService;
-    
+
     private Long getLoginUserId(HttpServletRequest request) {
         return (Long) request.getAttribute("loginUserId");
     }
 
-    @Operation(summary = "내 여행 일정 목록 조회", description = "status 파라미터(ongoing/completed)에 따라 내 일정 카드를 가져옵니다.")
+    @Operation(summary = "여행 계획 리스트 보기")
     @GetMapping
     public ResponseEntity<ApiResponse<List<PlanResponse>>> getPlanList(
             @RequestParam(required = false, defaultValue = "ongoing") String status,
             HttpServletRequest request
     ) {
-    	Long userId = (Long) getLoginUserId(request);
+        Long userId = getLoginUserId(request);
         List<PlanResponse> plans = planService.getPlans(userId, status);
-        return ResponseEntity.ok(ApiResponse.success("여행 계획 목록 조회 성공", plans));
+        return ResponseEntity.ok(ApiResponse.success("여행 계획 리스트 조회 성공", plans));
     }
-    
-    @Operation(summary = "여행 일정에 새로운 장소 코스 추가", description = "요청 경로의 planId와 바디의 placeId를 엮어 상세 일정을 추가합니다. DB에 장소가 없으면 자동 JIT 생성이 발동합니다.")
+
+    @Operation(summary = "테스트용: 여행 일정에 장소 추가")
     @PostMapping("/{planId}/add")
-    public ResponseEntity<Map<String, Object>> addPlaceToPlan(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> addPlaceToPlan(
             @PathVariable Long planId,
             @RequestBody PlanDetailRequest dto,
             HttpServletRequest request
     ) {
-    	Long userId = getLoginUserId(request);
-        
-        boolean isSuccess = planService.addPlaceToPlan(planId, userId, dto);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("isSuccess", isSuccess);
-        response.put("code", isSuccess ? "201" : "400");
-        response.put("message", isSuccess ? "장소가 여행 일정에 추가되었습니다." : "일정 코스 추가에 실패했습니다.");
-
-        return isSuccess ? ResponseEntity.status(HttpStatus.CREATED).body(response)
-                		 : ResponseEntity.badRequest().body(response);
+        Long userId = getLoginUserId(request);
+        planService.addPlaceToPlan(planId, userId, dto);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("201", "장소가 여행 일정에 추가되었습니다.", Map.of()));
     }
-    
-    @Operation(summary = "새 여행 일정 생성", description = "[화면 1]에서 사용하며, 시작일이 과거인 날짜면 생성 자체를 차단합니다.")
+
+    @Operation(summary = "여행 계획 추가")
     @PostMapping("/add")
-    public ResponseEntity<ApiResponse<Long>> createPlan(
+    public ResponseEntity<ApiResponse<PlanIdResponse>> createPlan(
             @RequestBody PlanCreateRequest dto,
             HttpServletRequest request
     ) {
-    	Long userId = getLoginUserId(request);
+        Long userId = getLoginUserId(request);
         Long planId = planService.createPlanTemplate(userId, dto);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("여행 계획 생성 성공", planId));
+                .body(ApiResponse.success(
+                        "201",
+                        "여행 계획이 성공적으로 등록되었습니다.",
+                        new PlanIdResponse(planId)
+                ));
     }
 
-    @Operation(summary = "계획 카드 제목 변경", description = "[화면 1] 목록의 더보기 메뉴에서 제목만 단독으로 고칠 때 호출합니다.")
+    @Operation(summary = "여행계획 수정(제목 수정)")
     @PatchMapping("/{planId}")
-    public ResponseEntity<ApiResponse<String>> updateTitle(
+    public ResponseEntity<ApiResponse<Void>> updateTitle(
             @PathVariable Long planId,
-            @RequestParam String title,
+            @RequestBody PlanTitleUpdateRequest dto,
             HttpServletRequest request
     ) {
-    	Long userId = getLoginUserId(request);
-        boolean isUpdated = planService.modifyPlanTitle(planId, userId, title);
-
-        if (isUpdated) {
-            return ResponseEntity.ok(ApiResponse.success("계획 제목 변경 성공", null));
+        Long userId = getLoginUserId(request);
+        String newTitle = dto != null ? dto.getTitle() : null;
+        if (newTitle == null || newTitle.trim().isEmpty()) {
+            throw new IllegalArgumentException("수정할 여행 계획 제목을 입력해주세요.");
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("존재하지 않는 계획입니다."));
+
+        planService.modifyPlanTitle(planId, userId, newTitle.trim());
+        return ResponseEntity.ok(ApiResponse.success("여행 기본 정보가 성공적으로 수정되었습니다.", null));
     }
 
-    @Operation(summary = "계획 카드 영구 삭제", description = "[화면 1]에서 카드를 날릴 때 자식 장소 블록까지 연쇄 파괴(CASCADE)합니다.")
+    @Operation(summary = "여행 계획 삭제")
     @DeleteMapping("/{planId}")
-    public ResponseEntity<ApiResponse<String>> deletePlan(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deletePlan(
             @PathVariable Long planId,
             HttpServletRequest request
     ) {
-    	Long userId = getLoginUserId(request);
-        boolean isDeleted = planService.removePlan(planId, userId);
-
-        if (isDeleted) {
-            return ResponseEntity.ok(ApiResponse.success("여행 계획 삭제 성공", null));
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("존재하지 않는 계획입니다."));
+        Long userId = getLoginUserId(request);
+        planService.removePlan(planId, userId);
+        return ResponseEntity.ok(ApiResponse.success("여행 계획 삭제 성공", Map.of()));
     }
 
-    @Operation(summary = "계획 세부 수정", description = "수정된 종료일이 시작일보다 빠르면 400 에러를 뿜어냅니다.")
+    @Operation(summary = "여행 계획 상세 조회")
+    @GetMapping("/{planId}/detail")
+    public ResponseEntity<ApiResponse<PlanDetailViewResponse>> getPlanDetail(
+            @PathVariable Long planId,
+            HttpServletRequest request
+    ) {
+        Long userId = getLoginUserId(request);
+        PlanDetailViewResponse response = planService.getPlanDetail(planId, userId);
+        return ResponseEntity.ok(ApiResponse.success("여행 계획 상세 조회 성공", response));
+    }
+
+    @Operation(summary = "여행 계획 상세 수정")
     @PatchMapping("/{planId}/detail")
-    public ResponseEntity<ApiResponse<String>> saveFullPlan(
+    public ResponseEntity<ApiResponse<PlanIdResponse>> saveFullPlan(
             @PathVariable Long planId,
             @RequestBody PlanSaveRequest dto,
             HttpServletRequest request
     ) {
-    	Long userId = getLoginUserId(request);
+        Long userId = getLoginUserId(request);
         planService.saveFullPlanRoute(planId, userId, dto);
-        return ResponseEntity.ok(ApiResponse.success("여행 계획 저장 완료", null));
+        return ResponseEntity.ok(ApiResponse.success(
+                "여행 계획이 성공적으로 수정되었습니다.",
+                new PlanIdResponse(planId)
+        ));
     }
-    
-    @Operation(summary = "게시글 작성 양식 일정 자동완성 패키지 로드", description = "드롭다운에서 완료된 계획 선택 시 폼을 자동완성할 부모/자식 토탈 에셋을 반환합니다.")
+
+    @Operation(summary = "여행 계획 데이터 추출 - 게시판 연동")
     @GetMapping("/{planId}/autocomplete")
     public ResponseEntity<ApiResponse<PlanAutocompleteResponse>> getPlanAutocompleteForBoard(@PathVariable Long planId) {
         PlanAutocompleteResponse autocompleteData = planService.getPlanAutocompleteData(planId);

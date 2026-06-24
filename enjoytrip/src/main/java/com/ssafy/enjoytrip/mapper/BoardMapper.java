@@ -33,12 +33,14 @@ public interface BoardMapper {
 	int insertLike(@Param("boardId") Long boardId, @Param("userId") Long userId);
 	int deleteLike(@Param("boardId") Long boardId, @Param("userId") Long userId);
 	int updateLikeCount(@Param("boardId") Long boardId, @Param("amount") int amount);
+	int selectLikeCount(@Param("boardId") Long boardId);
 	
     // 벡엔드 내부 로직용 (게시판 - 게시물 작성)
     // 1. 글 쓰기 (Insert)
     int insertBoard(Board board);
     
     int insertBoardHashtags(@Param("boardId") Long boardId, @Param("hashtagId") Integer hashtagId);
+    Integer selectHashtagIdByName(@Param("tagName") String tagName);
     
     // 2. 글 상세 조회 (Select)
     Board selectBoardById(Long id);

@@ -14,6 +14,8 @@ public interface CommentMapper {
                       @Param("userId") Long userId, 
                       @Param("content") String content);
 
+    Long selectLastInsertId();
+
     // 2. 특정 게시글에 달린 댓글 목록 전체 조회
     List<CommentResponse> selectCommentsByBoardId(Long boardId);
 

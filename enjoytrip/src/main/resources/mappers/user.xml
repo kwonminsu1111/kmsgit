@@ -77,7 +77,6 @@
     <!-- 유저의 댓글을 불러오는 sql문 -->
     <select id="selectUserComments" parameterType="long" resultType="com.ssafy.enjoytrip.dto.response.UserCommentResponse">
         SELECT 
-            c.id AS commentId,
             c.board_id AS boardId,
             b.title AS title,
             c.content AS content,
@@ -93,10 +92,12 @@
         SELECT 
             b.id AS boardId,
             b.title AS title,
-            b.content AS content,
+            u.nickname AS nickname,
+            b.like_count AS likeCount,
             b.created_at AS createdAt
         FROM Board_Like bl
         JOIN Boards b ON bl.board_id = b.id
+        JOIN Users u ON b.user_id = u.id
         WHERE bl.user_id = #{userId}
         ORDER BY b.created_at DESC
     </select>
@@ -120,5 +121,11 @@
 	    INSERT INTO User_Hashtag (user_id, hashtag_id)
 	    VALUES (#{userId}, #{hashtagId})
 	</insert>
+
+    <select id="selectHashtagIdByName" parameterType="string" resultType="int">
+        SELECT id
+        FROM Hashtag
+        WHERE tag_name = #{tagName}
+    </select>
 
 </mapper>

@@ -12,6 +12,7 @@ import com.ssafy.enjoytrip.dto.request.PlanDetailRequest;
 import com.ssafy.enjoytrip.dto.request.PlanSaveRequest;
 import com.ssafy.enjoytrip.dto.response.PlanAutocompleteResponse;
 import com.ssafy.enjoytrip.dto.response.PlanDetailResponse;
+import com.ssafy.enjoytrip.dto.response.PlanDetailViewResponse;
 import com.ssafy.enjoytrip.dto.response.PlanResponse;
 import com.ssafy.enjoytrip.mapper.PlanMapper;
 import com.ssafy.enjoytrip.model.Plan;
@@ -97,6 +98,17 @@ public class PlanService {
         return planMapper.selectPlanDetailsByPlanId(planId);
     }
 
+    public PlanDetailViewResponse getPlanDetail(Long planId, Long userId) {
+        validatePlanOwner(planId, userId);
+
+        Plan plan = planMapper.selectPlanMasterById(planId);
+        PlanDetailViewResponse response = new PlanDetailViewResponse();
+        response.setStartDate(plan.getStartDate());
+        response.setEndDate(plan.getEndDate());
+        response.setDetails(planMapper.selectPlanDetailsByPlanId(planId));
+        return response;
+    }
+
     // 6. 플래너 내부에서 수정할 때도 필터링
     @Transactional
     public boolean saveFullPlanRoute(Long planId, Long userId, PlanSaveRequest dto) {
@@ -133,6 +145,10 @@ public class PlanService {
         planMapper.deletePlanDetailsByPlanId(planId);
         if (dto.getDetails() != null && !dto.getDetails().isEmpty()) {
             for (PlanDetailRequest detail : dto.getDetails()) {
+                int isExist = planMapper.checkAttractionExist(detail.getPlaceId());
+                if (isExist == 0) {
+                    planMapper.insertBlankAttraction(detail.getPlaceId());
+                }
                 planMapper.insertPlanDetail(planId, detail);
             }
         }

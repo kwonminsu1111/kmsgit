@@ -1,15 +1,16 @@
 package com.ssafy.enjoytrip.dto.response;
 
+import java.util.List;
+
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class PlanResponse {
-    private Long planId;
-    private String title;
+public class PlanDetailViewResponse {
     private String startDate;
     private String endDate;
+    private List<PlanDetailResponse> details;
 }
 
-// 여행 계획 리스트
+// 플랜 상세 조회용

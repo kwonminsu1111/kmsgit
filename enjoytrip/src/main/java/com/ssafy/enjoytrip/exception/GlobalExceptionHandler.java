@@ -10,6 +10,13 @@ import com.ssafy.enjoytrip.util.ApiResponse;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<ApiResponse<String>> handleApiException(ApiException e) {
+        return ResponseEntity
+                .status(e.getStatus())
+                .body(ApiResponse.error(e.getCode(), e.getMessage()));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<String>> handleIllegalArgumentException(IllegalArgumentException e) {
         return ResponseEntity

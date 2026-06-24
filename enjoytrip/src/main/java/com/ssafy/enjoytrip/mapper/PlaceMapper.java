@@ -25,6 +25,8 @@ public interface PlaceMapper {
     
     // 5. 실제 리뷰 등록
     int insertReview(@Param("placeId") Long placeId, @Param("userId") Long userId, @Param("dto") ReviewCreateRequest dto);
+
+    Long selectLastInsertId();
     
     // 6. 삭제 요청 시 권한 방어용: 리뷰 작성자 ID 조회
     Long selectReviewWriterId(Long reviewId);
