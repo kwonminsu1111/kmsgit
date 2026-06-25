@@ -1,7 +1,9 @@
 package com.ssafy.enjoytrip.service;
 
+import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,10 +12,13 @@ import com.ssafy.enjoytrip.dto.request.BoardUpdateRequest;
 import com.ssafy.enjoytrip.dto.response.BoardLikeResponse;
 import com.ssafy.enjoytrip.dto.response.BoardResponse;
 import com.ssafy.enjoytrip.dto.response.CommentResponse;
+import com.ssafy.enjoytrip.exception.ApiException;
 import com.ssafy.enjoytrip.mapper.BoardMapper;
 import com.ssafy.enjoytrip.mapper.CommentMapper;
+import com.ssafy.enjoytrip.mapper.PlanMapper;
 import com.ssafy.enjoytrip.model.Board;
 import com.ssafy.enjoytrip.model.Hashtag;
+import com.ssafy.enjoytrip.model.Plan;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,6 +28,7 @@ public class BoardService {
 
     private final BoardMapper boardMapper;
     private final CommentMapper commentMapper;
+    private final PlanMapper planMapper;
 
     public List<BoardResponse> getAllBoards(
             String region,
@@ -73,6 +79,12 @@ public class BoardService {
 
     @Transactional
     public Long createBoard(BoardCreateRequest dto, Long loginUserId) {
+        if (dto == null) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "BOARD_REQUIRED_FIELD", "게시글 작성 정보를 입력해주세요.");
+        }
+
+        validateLinkablePlan(dto.getPlanId(), loginUserId);
+
         Board board = new Board();
         board.setUserId(loginUserId);
         board.setPlanId(dto.getPlanId());
@@ -146,6 +158,30 @@ public class BoardService {
                 throw new IllegalArgumentException("존재하지 않는 해시태그입니다: " + tagName);
             }
             boardMapper.insertBoardHashtags(boardId, tagId);
+        }
+    }
+
+    private void validateLinkablePlan(Long planId, Long loginUserId) {
+        if (planId == null) {
+            return;
+        }
+
+        planMapper.updatePlanStatusAutomatically();
+        Plan plan = planMapper.selectPlanMasterById(planId);
+
+        if (plan == null) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "BOARD_PLAN_NOT_FOUND", "존재하지 않는 여행 계획입니다.");
+        }
+
+        if (!loginUserId.equals(plan.getUserId())) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "BOARD_PLAN_FORBIDDEN", "본인의 여행 계획만 게시글에 연동할 수 있습니다.");
+        }
+
+        LocalDate endDate = LocalDate.parse(plan.getEndDate());
+        boolean isEnded = endDate.isBefore(LocalDate.now());
+
+        if (!"COMPLETED".equalsIgnoreCase(plan.getStatus()) || !isEnded) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "BOARD_PLAN_NOT_COMPLETED", "여행 종료일이 지난 완료된 계획만 게시글에 연동할 수 있습니다.");
         }
     }
 }

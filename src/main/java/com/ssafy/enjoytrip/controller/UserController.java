@@ -33,14 +33,14 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
-@Tag(name = "User 컨트롤러", description = "유저 회원가입, 로그인, 마이페이지")
+@Tag(name = "User Controller", description = "회원가입, 로그인, 마이페이지")
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
 
     private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
-    private static final String SUCCESS_MESSAGE = "요청이 성공적입니다.";
+    private static final String SUCCESS_MESSAGE = "요청이 성공적으로 처리되었습니다.";
 
     private final UserService userService;
     private final JwtUtil jwtUtil;
@@ -55,12 +55,9 @@ public class UserController {
     @Operation(summary = "로그인")
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<UserLoginResponse>> login(@RequestBody UserLoginRequest dto) {
-        User loginUser = userService.login(dto.getEmail(), dto.getPassword());
-
-        if (loginUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("401", "아이디 또는 비밀번호가 일치하지 않습니다."));
-        }
+        String email = dto == null ? null : dto.getEmail();
+        String password = dto == null ? null : dto.getPassword();
+        User loginUser = userService.login(email, password);
 
         String accessToken = jwtUtil.createAccessToken(loginUser.getId());
         String refreshToken = jwtUtil.createRefreshToken(loginUser.getId());
@@ -139,20 +136,20 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(SUCCESS_MESSAGE, null));
     }
 
-    @Operation(summary = "댓글 단 게시글 조회")
+    @Operation(summary = "내 댓글 게시글 조회")
     @GetMapping("/me/comments")
     public ResponseEntity<ApiResponse<List<UserCommentResponse>>> getUserComments(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute(JwtUtil.REQUEST_ATTRIBUTE_NAME);
         List<UserCommentResponse> response = userService.getUserComments(userId);
-        return ResponseEntity.ok(ApiResponse.success("내가 댓글 단 게시글 조회 성공", response));
+        return ResponseEntity.ok(ApiResponse.success("내 댓글 게시글 조회 성공", response));
     }
 
-    @Operation(summary = "좋아요 단 게시글 조회")
+    @Operation(summary = "좋아요 누른 게시글 조회")
     @GetMapping("/me/liked-boards")
     public ResponseEntity<ApiResponse<List<UserLikedBoardResponse>>> getUserLikedBoards(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute(JwtUtil.REQUEST_ATTRIBUTE_NAME);
         List<UserLikedBoardResponse> response = userService.getUserLikedBoards(userId);
-        return ResponseEntity.ok(ApiResponse.success("내가 좋아요 누른 게시글 조회 성공", response));
+        return ResponseEntity.ok(ApiResponse.success("내가 좋아요를 누른 게시글 조회 성공", response));
     }
 
     private ResponseCookie createRefreshTokenCookie(String refreshToken) {
