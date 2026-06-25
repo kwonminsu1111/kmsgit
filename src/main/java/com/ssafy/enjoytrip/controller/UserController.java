@@ -54,7 +54,10 @@ public class UserController {
 
     @Operation(summary = "로그인")
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<UserLoginResponse>> login(@RequestBody UserLoginRequest dto) {
+    public ResponseEntity<ApiResponse<UserLoginResponse>> login(
+            @RequestBody UserLoginRequest dto,
+            HttpServletRequest request
+    ) {
         String email = dto == null ? null : dto.getEmail();
         String password = dto == null ? null : dto.getPassword();
         User loginUser = userService.login(email, password);
@@ -62,7 +65,7 @@ public class UserController {
         String accessToken = jwtUtil.createAccessToken(loginUser.getId());
         String refreshToken = jwtUtil.createRefreshToken(loginUser.getId());
         UserLoginResponse userResponse = UserLoginResponse.from(loginUser, accessToken);
-        ResponseCookie refreshTokenCookie = createRefreshTokenCookie(refreshToken);
+        ResponseCookie refreshTokenCookie = createRefreshTokenCookie(refreshToken, request);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
@@ -71,8 +74,8 @@ public class UserController {
 
     @Operation(summary = "로그아웃")
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<String>> logout() {
-        ResponseCookie expiredRefreshTokenCookie = expireRefreshTokenCookie();
+    public ResponseEntity<ApiResponse<String>> logout(HttpServletRequest request) {
+        ResponseCookie expiredRefreshTokenCookie = expireRefreshTokenCookie(request);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, expiredRefreshTokenCookie.toString())
@@ -104,7 +107,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<String>> deleteUser(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute(JwtUtil.REQUEST_ATTRIBUTE_NAME);
         userService.deleteUser(userId);
-        ResponseCookie expiredRefreshTokenCookie = expireRefreshTokenCookie();
+        ResponseCookie expiredRefreshTokenCookie = expireRefreshTokenCookie(request);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, expiredRefreshTokenCookie.toString())
@@ -152,24 +155,34 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("내가 좋아요를 누른 게시글 조회 성공", response));
     }
 
-    private ResponseCookie createRefreshTokenCookie(String refreshToken) {
+    private ResponseCookie createRefreshTokenCookie(String refreshToken, HttpServletRequest request) {
+        boolean crossSite = isCrossSiteFrontend(request);
         return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, refreshToken)
                 .httpOnly(true)
-                .secure(false)
-                .sameSite("Lax")
+                .secure(crossSite)
+                .sameSite(crossSite ? "None" : "Lax")
                 .path("/users/re-issue")
                 .maxAge(JwtUtil.REFRESH_TOKEN_EXPIRATION_TIME_MILLIS / 1000)
                 .build();
     }
 
-    private ResponseCookie expireRefreshTokenCookie() {
+    private ResponseCookie expireRefreshTokenCookie(HttpServletRequest request) {
+        boolean crossSite = isCrossSiteFrontend(request);
         return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, "")
                 .httpOnly(true)
-                .secure(false)
-                .sameSite("Lax")
+                .secure(crossSite)
+                .sameSite(crossSite ? "None" : "Lax")
                 .path("/users/re-issue")
                 .maxAge(0)
                 .build();
+    }
+
+    private boolean isCrossSiteFrontend(HttpServletRequest request) {
+        String origin = request.getHeader("Origin");
+        if (origin == null || origin.isBlank()) {
+            return false;
+        }
+        return !origin.contains("localhost") && !origin.contains("127.0.0.1");
     }
 
     private String extractRefreshToken(HttpServletRequest request) {
